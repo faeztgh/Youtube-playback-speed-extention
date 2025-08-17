@@ -1,0 +1,23 @@
+name-template: "v$NEXT_PATCH_VERSION"
+tag-template: "v$NEXT_PATCH_VERSION"
+categories:
+    - title: "🚀 Features"
+      labels: ["feat", "feature"]
+    - title: "🐛 Fixes"
+      labels: ["fix", "bug"]
+    - title: "🧰 Maintenance"
+      labels: ["chore", "refactor", "deps"]
+change-template: "- $TITLE (#$NUMBER) by @$AUTHOR"
+change-title-escapes: ""
+exclude-labels: ["skip-changelog"]
+version-resolver:
+    major:
+        labels: ["major"]
+    minor:
+        labels: ["minor", "feat", "feature"]
+    patch:
+        labels: ["patch", "fix", "bug", "chore", "refactor"]
+    default: patch
+template: |
+    ## Changes
+    $CHANGES
