@@ -9,20 +9,13 @@ import { PresetList } from "../components/PresetList";
 import { SpeedSlider } from "../components/SpeedSlider";
 import { ProfilesTab } from "../popup/tabs/ProfilesTab";
 import { AutomationTab } from "../popup/tabs/AutomationTab";
-import { OverlayTab } from "../popup/tabs/OverlayTab";
-import { ShortcutsTab } from "../popup/tabs/ShortcutsTab";
 import { Heart } from "lucide-react";
 
 export const App = () => {
     const [s, setLocal] = useState<ExtensionSettings | null>(null);
     const [customRateInput, setCustomRateInput] = useState("");
     const [active, setActive] = useState<
-        | "general"
-        | "presets"
-        | "profiles"
-        | "automation"
-        | "overlay"
-        | "shortcuts"
+        "general" | "presets" | "profiles" | "automation"
     >("general");
 
     useEffect(() => {
@@ -46,7 +39,7 @@ export const App = () => {
     return (
         <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 text-neutral-900 dark:text-neutral-100">
             <header className="sticky top-0 z-10 bg-[#0f0f0f] text-white shadow-sm">
-                <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+                <div className="max-w-7xl w-full mx-auto px-6 py-4 flex items-center justify-between">
                     <div>
                         <div className="text-sm opacity-80">
                             YouTube Playback Controller
@@ -69,7 +62,7 @@ export const App = () => {
                 </div>
             </header>
 
-            <main className="max-w-5xl mx-auto px-6 py-6 grid grid-cols-12 gap-6">
+            <main className="max-w-7xl w-full mx-auto px-6 py-6 grid grid-cols-12 gap-6">
                 <nav className="col-span-12 md:col-span-3">
                     <div className="sticky top-20 space-y-1">
                         {[
@@ -77,8 +70,6 @@ export const App = () => {
                             ["presets", "Presets"],
                             ["profiles", "Profiles"],
                             ["automation", "Automation"],
-                            ["overlay", "Overlay"],
-                            ["shortcuts", "Shortcuts"],
                         ].map(([key, label]) => (
                             <button
                                 key={key}
@@ -120,18 +111,6 @@ export const App = () => {
                                             })
                                         }
                                     />
-                                </label>
-                                <label className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
-                                        checked={s.showOverlay}
-                                        onChange={(e) =>
-                                            update({
-                                                showOverlay: e.target.checked,
-                                            })
-                                        }
-                                    />
-                                    <span>Show overlay in player</span>
                                 </label>
                                 <label className="flex items-center gap-2">
                                     <input
@@ -232,24 +211,6 @@ export const App = () => {
                                 Automation
                             </h3>
                             <AutomationTab />
-                        </div>
-                    )}
-
-                    {active === "overlay" && (
-                        <div className="p-5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
-                            <h3 className="m-0 text-lg font-semibold mb-3">
-                                Overlay
-                            </h3>
-                            <OverlayTab />
-                        </div>
-                    )}
-
-                    {active === "shortcuts" && (
-                        <div className="p-5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm">
-                            <h3 className="m-0 text-lg font-semibold mb-3">
-                                Shortcuts
-                            </h3>
-                            <ShortcutsTab />
                         </div>
                     )}
                 </section>

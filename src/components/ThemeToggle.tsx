@@ -1,4 +1,4 @@
-export type ThemeMode = "system" | "light" | "dark";
+import type { ThemeMode } from "../shared/storage";
 
 export type ThemeToggleProps = {
     value: ThemeMode;
@@ -99,7 +99,7 @@ export const ThemeToggle = ({
                             "w-8 h-8 grid place-items-center rounded-md text-white/85 transition " +
                             (active
                                 ? "bg-white !text-[#0f0f0f] shadow ring-1 ring-white/50"
-                                : "hover:bg白/10 active:bg白/20")
+                                : "hover:bg-white/10 active:bg-white/20")
                         }
                         title={mode[0].toUpperCase() + mode.slice(1)}
                         aria-label={mode}

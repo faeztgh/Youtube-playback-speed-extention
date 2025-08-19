@@ -1,31 +1,13 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import { resolve } from "path";
+import type { UserConfigExport } from "vite";
+import content from "./vite.content.config";
+import app from "./vite.app.config";
 
-export default defineConfig({
-    plugins: [react()],
-    publicDir: "public",
-    build: {
-        outDir: "dist",
-        emptyOutDir: true,
-        rollupOptions: {
-            input: {
-                popup: resolve(__dirname, "popup.html"),
-                options: resolve(__dirname, "options.html"),
-                content: resolve(__dirname, "src/content/index.tsx"),
-                background: resolve(__dirname, "src/background/index.ts"),
-            },
-            output: {
-                entryFileNames: (assetInfo) => {
-                    if (assetInfo.name?.includes("content"))
-                        return "content.js";
-                    if (assetInfo.name?.includes("background"))
-                        return "background.js";
-                    return "[name].js";
-                },
-                chunkFileNames: "chunks/[name]-[hash].js",
-                assetFileNames: "assets/[name]-[hash][extname]",
-            },
-        },
-    },
-});
+export default ((env): UserConfigExport => {
+    const mode = env?.mode || process.env.BUILD_TARGET;
+    if (mode === "content" || process.env.BUILD_TARGET === "content")
+        return content;
+    if (mode === "app" || process.env.BUILD_TARGET === "app") return app;
+    throw new Error(
+        "Specify which config to use: set BUILD_TARGET=content or BUILD_TARGET=app, or run the associated npm scripts."
+    );
+}) as unknown as UserConfigExport;

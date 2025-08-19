@@ -1,3 +1,5 @@
+import { formatBadgeText } from "../shared/badge";
+
 function isSupportedUrl(url?: string | null): boolean {
     if (!url) return false;
     try {
@@ -7,23 +9,6 @@ function isSupportedUrl(url?: string | null): boolean {
     } catch {
         return false;
     }
-}
-
-function formatBadgeText(rate: number): string {
-    const sign = rate < 0 ? "-" : "";
-    const abs = Math.abs(rate);
-    const to2 = Math.round(abs * 100) / 100;
-    let str = String(to2);
-    if (str.includes(".")) {
-        str = str.replace(/\.0+$/, "").replace(/(\.[0-9])0$/, "$1");
-    }
-    let withX = `${sign}${str}x`;
-    if (withX.length <= 4) return withX;
-    const to1 = Math.round(abs * 10) / 10;
-    let str1 = String(to1).replace(/\.0$/, "");
-    withX = `${sign}${str1}x`;
-    if (withX.length <= 4) return withX;
-    return `${sign}${Math.round(abs)}`;
 }
 
 async function requestRateFromTab(tabId: number) {
@@ -91,7 +76,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     }
 });
 
-chrome.runtime.onMessage.addListener((message, sender) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message?.type === "CURRENT_PLAYBACK_RATE") {
         const tabId = sender?.tab?.id;
         if (typeof tabId === "number") {
@@ -113,6 +98,29 @@ chrome.runtime.onMessage.addListener((message, sender) => {
                 // ignore
             }
         }
+    } else if (message?.type === "GET_TAB_ID") {
+        const tabId = sender?.tab?.id ?? null;
+        sendResponse({ tabId });
+    } else if (message?.type === "SAVE_TAB_VIDEO_RATE") {
+        const tabId = sender?.tab?.id;
+        if (typeof tabId === "number") {
+            const key = `tab:${tabId}:video:${message.videoId}:rate`;
+            chrome.storage.session.set({ [key]: message.rate }, () => {
+                sendResponse({ ok: true });
+            });
+            return true;
+        }
+        sendResponse({ ok: false });
+    } else if (message?.type === "FETCH_TAB_VIDEO_RATE") {
+        const tabId = sender?.tab?.id;
+        if (typeof tabId === "number") {
+            const key = `tab:${tabId}:video:${message.videoId}:rate`;
+            chrome.storage.session.get(key, (items) => {
+                sendResponse({ rate: items[key] });
+            });
+            return true;
+        }
+        sendResponse({ rate: undefined });
     }
 });
 

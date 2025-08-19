@@ -10,7 +10,7 @@
     "paths": {
       "@shared/*": ["src/shared/*"]
     },
-    "types": ["chrome"],
+    "types": ["chrome", "node"],
     "noEmit": true,
     "skipLibCheck": true
   },

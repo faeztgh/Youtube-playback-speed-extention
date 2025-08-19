@@ -45,7 +45,7 @@ export type ExtensionSettings = {
 
 const DEFAULT_SETTINGS: ExtensionSettings = {
     defaultPlaybackRate: 1.0,
-    showOverlay: true,
+    showOverlay: false,
     customRates: [0.75, 1, 1.25, 1.5, 1.75, 2],
     theme: "system",
     stepSize: 0.25,
@@ -63,7 +63,7 @@ const DEFAULT_SETTINGS: ExtensionSettings = {
         position: { rightPx: 12, bottomPx: 88 },
         opacity: 0.95,
         autoHide: false,
-        visible: true,
+        visible: false,
     },
     rules: [],
 };

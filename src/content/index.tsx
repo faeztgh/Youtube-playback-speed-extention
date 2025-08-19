@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-import { createRoot } from "react-dom/client";
 import "../styles/tailwind.css";
 import {
     getPlaybackRate,
@@ -14,13 +12,41 @@ import {
     ExtensionSettings,
     setSettings,
 } from "../shared/storage";
-import { Overlay } from "./Overlay";
+import { applyRate } from "../shared/rate";
+
+function getVideoIdFromUrl(u: string): string | null {
+    try {
+        const url = new URL(u, location.href);
+        if (url.hostname === "youtu.be") return url.pathname.slice(1);
+        if (url.searchParams.has("v")) return url.searchParams.get("v");
+        if (url.pathname.startsWith("/shorts/"))
+            return url.pathname.split("/")[2] ?? null;
+        return null;
+    } catch {
+        return null;
+    }
+}
 
 function getYouTubeTitle(): string {
     const og = document.querySelector(
         'meta[property="og:title"]'
     ) as HTMLMetaElement | null;
     if (og?.content) return og.content;
+    const metaTitle = document.querySelector(
+        'meta[name="title"]'
+    ) as HTMLMetaElement | null;
+    if (metaTitle?.content) return metaTitle.content;
+    const ytFormatted = document.querySelector(
+        "#title h1 yt-formatted-string"
+    ) as HTMLElement | null;
+    if (ytFormatted) {
+        const v = (
+            ytFormatted.getAttribute("title") ||
+            ytFormatted.textContent ||
+            ""
+        ).trim();
+        if (v) return v;
+    }
     return document.title || "";
 }
 
@@ -47,237 +73,224 @@ function matchesRule(rule: ExtensionSettings["rules"][number]): boolean {
     return location.href.toLowerCase().includes(p);
 }
 
-function mountOverlay() {
-    const container = document.createElement("div");
-    document.documentElement.appendChild(container);
-    const root = createRoot(container);
-    const App = () => {
-        const [rate, setRate] = useState<number>(
-            getPlaybackRate() ?? DEFAULT_SETTINGS.defaultPlaybackRate
-        );
-        const [presets, setPresets] = useState<number[]>(
-            DEFAULT_SETTINGS.customRates
-        );
-        const [visible, setVisible] = useState<boolean>(
-            DEFAULT_SETTINGS.showOverlay
-        );
-        const [rightPx, setRight] = useState<number>(
-            DEFAULT_SETTINGS.overlay.position.rightPx
-        );
-        const [bottomPx, setBottom] = useState<number>(
-            DEFAULT_SETTINGS.overlay.position.bottomPx
-        );
-        const [opacity, setOpacity] = useState<number>(
-            DEFAULT_SETTINGS.overlay.opacity
-        );
-        const [autoHide, setAutoHide] = useState<boolean>(
-            DEFAULT_SETTINGS.overlay.autoHide
-        );
-
-        useEffect(() => {
-            void getSettings().then((s) => {
-                setPresets(s.customRates);
-                setVisible(s.overlay.visible || s.showOverlay);
-                setRight(s.overlay.position.rightPx);
-                setBottom(s.overlay.position.bottomPx);
-                setOpacity(s.overlay.opacity);
-                setAutoHide(s.overlay.autoHide);
-            });
-            const off = onSettingsChanged((s) => {
-                setPresets(s.customRates);
-                setVisible(s.overlay.visible || s.showOverlay);
-                setRight(s.overlay.position.rightPx);
-                setBottom(s.overlay.position.bottomPx);
-                setOpacity(s.overlay.opacity);
-                setAutoHide(s.overlay.autoHide);
-            });
-            return off;
-        }, []);
-
-        useEffect(() => {
-            const findVideo = (): HTMLVideoElement | null => {
-                const specific = document.querySelector(
-                    "video.html5-main-video"
-                ) as HTMLVideoElement | null;
-                if (specific && !Number.isNaN(specific.playbackRate))
-                    return specific;
-                return document.querySelector(
-                    "video"
-                ) as HTMLVideoElement | null;
-            };
-
-            let currentVideo: HTMLVideoElement | null = null;
-            const onRateChange = () => {
-                const current = getPlaybackRate();
-                if (current !== null) {
-                    setRate(current);
-                    void sendMessage({
-                        type: "CURRENT_PLAYBACK_RATE",
-                        rate: current,
-                    });
-                    void setSettings({ defaultPlaybackRate: current });
-                }
-            };
-
-            const attach = () => {
-                const v = findVideo();
-                if (!v || v === currentVideo) return;
-                if (currentVideo) {
-                    currentVideo.removeEventListener(
-                        "ratechange",
-                        onRateChange,
-                        true
-                    );
-                }
-                currentVideo = v;
-                currentVideo.addEventListener("ratechange", onRateChange, true);
-                // send once to initialize UI/badge
-                onRateChange();
-            };
-
-            attach();
-            const mo = new MutationObserver(() => attach());
-            mo.observe(document.documentElement, {
-                childList: true,
-                subtree: true,
-            });
-
-            return () => {
-                if (currentVideo) {
-                    currentVideo.removeEventListener(
-                        "ratechange",
-                        onRateChange,
-                        true
-                    );
-                }
-                mo.disconnect();
-            };
-        }, []);
-        return (
-            <Overlay
-                currentRate={rate}
-                presets={presets}
-                onChange={(r: number) => setPlaybackRate(r)}
-                rightPx={rightPx}
-                bottomPx={bottomPx}
-                opacity={opacity}
-                visible={visible}
-                autoHide={autoHide}
-            />
-        );
-    };
-    root.render(<App />);
-}
-
-async function applyAutomationIfAny(s: ExtensionSettings) {
-    for (const rule of s.rules) {
+function findMatchedRule(settings: ExtensionSettings) {
+    for (const rule of settings.rules) {
         try {
-            if (matchesRule(rule)) {
-                setPlaybackRate(rule.speed);
-                break;
-            }
+            if (matchesRule(rule)) return rule;
         } catch {}
     }
+    return null;
 }
 
-function bindShortcuts(s: ExtensionSettings) {
-    const handler = (e: KeyboardEvent) => {
-        const target = e.target as HTMLElement | null;
-        if (target) {
-            const tag = target.tagName.toLowerCase();
-            const isEditable = (target as HTMLElement).isContentEditable;
-            if (tag === "input" || tag === "textarea" || isEditable) return;
+function nearlyEqual(a: number, b: number, eps = 1e-3) {
+    return Math.abs(a - b) < eps;
+}
+
+let cancelAutomation: (() => void) | null = null;
+let automationPauseUntil = 0;
+let userOverrideRate: number | null = null;
+
+function isAutomationPaused() {
+    return Date.now() < automationPauseUntil;
+}
+
+function hasUserOverride(): boolean {
+    return typeof userOverrideRate === "number";
+}
+
+function enforceAutomation(settings: ExtensionSettings) {
+    if (cancelAutomation) {
+        try {
+            cancelAutomation();
+        } finally {
+            cancelAutomation = null;
         }
+    }
 
-        const current = getPlaybackRate() ?? 1;
-        const step = s.stepSize;
-        const presets = s.customRates.slice().sort((a, b) => a - b);
+    // If user has manually chosen a rate for this tab/video, keep it and do not enforce rules.
+    if (hasUserOverride()) {
+        const r = Math.max(0.1, userOverrideRate as number);
+        void applyRate(r);
+        // Maintain for a short window in case the player resets itself
+        const start = Date.now();
+        const keepMs = 15000;
+        const interval = setInterval(() => {
+            const current = getPlaybackRate();
+            if (current !== null && !nearlyEqual(current, r)) void applyRate(r);
+            if (Date.now() - start > keepMs) clearInterval(interval);
+        }, 500);
+        cancelAutomation = () => clearInterval(interval);
+        return;
+    }
 
-        const snap = (val: number) => {
-            if (!s.snapToPreset || presets.length === 0) return val;
-            return presets.reduce(
-                (prev, curr) =>
-                    Math.abs(curr - val) < Math.abs(prev - val) ? curr : prev,
-                presets[0]
-            );
-        };
+    const rule = findMatchedRule(settings);
+    const desired = rule
+        ? Math.max(0.1, Number(rule.speed) || 1)
+        : Math.max(0.1, Number(settings.defaultPlaybackRate) || 1);
+    if (!rule && nearlyEqual(desired, 1)) return;
 
-        if (e.key === s.shortcuts.increase) {
-            const next = snap(current + step);
-            setPlaybackRate(next);
-        } else if (e.key === s.shortcuts.decrease) {
-            const next = snap(Math.max(0.1, current - step));
-            setPlaybackRate(next);
-        } else if (e.key === s.shortcuts.reset) {
-            setPlaybackRate(s.defaultPlaybackRate);
-        } else if (e.key === s.shortcuts.cycle) {
-            if (presets.length > 0) {
-                const idx = presets.findIndex(
-                    (p) => Math.abs(p - current) < 1e-6
-                );
-                const next =
-                    idx >= 0 ? presets[(idx + 1) % presets.length] : presets[0];
-                setPlaybackRate(next);
-            }
-        } else {
-            return;
-        }
-        e.preventDefault();
-        e.stopPropagation();
+    const apply = () => {
+        if (!isAutomationPaused()) void applyRate(desired);
     };
+    const delays = [0, 100, 250, 500, 1000];
+    for (const d of delays) setTimeout(apply, d);
 
-    window.addEventListener("keydown", handler, true);
-    return () => window.removeEventListener("keydown", handler, true);
+    const start = Date.now();
+    const enforceMs = 30000;
+    const interval = setInterval(() => {
+        if (!isAutomationPaused()) {
+            const current = getPlaybackRate();
+            if (current !== null && !nearlyEqual(current, desired)) {
+                void applyRate(desired);
+            }
+        }
+        if (Date.now() - start > enforceMs) clearInterval(interval);
+    }, 500);
+
+    let detach = () => {};
+    const video = document.querySelector(
+        "video.html5-main-video"
+    ) as HTMLVideoElement | null;
+    const v =
+        (video && !Number.isNaN(video.playbackRate) ? video : null) ||
+        (document.querySelector("video") as HTMLVideoElement | null);
+    if (v) {
+        const onRateChange = () => {
+            const current = getPlaybackRate();
+            if (current !== null) {
+                // Persist per-tab, per-video, and badge update
+                const vid = getVideoIdFromUrl(location.href);
+                if (vid) {
+                    void sendMessage({
+                        type: "SAVE_TAB_VIDEO_RATE",
+                        videoId: vid,
+                        rate: current,
+                    });
+                }
+                void sendMessage({
+                    type: "CURRENT_PLAYBACK_RATE",
+                    rate: current,
+                });
+            }
+            if (
+                !isAutomationPaused() &&
+                current !== null &&
+                !nearlyEqual(current, desired)
+            ) {
+                void applyRate(desired);
+            }
+        };
+        v.addEventListener("ratechange", onRateChange, true);
+        detach = () => v.removeEventListener("ratechange", onRateChange, true);
+    }
+
+    cancelAutomation = () => {
+        clearInterval(interval);
+        detach();
+    };
 }
 
 async function init() {
     let settings = await getSettings();
-    onVideoReady(() => {
-        // Always mount overlay once; visibility controlled by settings
-        mountOverlay();
-
-        if (
+    onVideoReady(async () => {
+        const vid = getVideoIdFromUrl(location.href);
+        if (vid) {
+            const resp = await sendMessage({
+                type: "FETCH_TAB_VIDEO_RATE",
+                videoId: vid,
+            });
+            const restored = typeof resp?.rate === "number" ? resp.rate : null;
+            if (restored !== null && restored !== undefined) {
+                userOverrideRate = restored;
+                setPlaybackRate(restored);
+            } else if (
+                settings.defaultPlaybackRate &&
+                settings.defaultPlaybackRate !== 1
+            ) {
+                setPlaybackRate(settings.defaultPlaybackRate);
+            }
+        } else if (
             settings.defaultPlaybackRate &&
             settings.defaultPlaybackRate !== 1
         ) {
             setPlaybackRate(settings.defaultPlaybackRate);
         }
 
-        void applyAutomationIfAny(settings);
+        enforceAutomation(settings);
 
-        // Bind shortcuts and update when settings change
-        let unbind = bindShortcuts(settings);
         let lastRulesKey = JSON.stringify(settings.rules);
         onSettingsChanged((s) => {
+            const prev = settings;
             settings = s;
-            // Re-apply automation only if rules changed
             const newRulesKey = JSON.stringify(s.rules);
-            if (newRulesKey !== lastRulesKey) {
+            const rulesChanged = newRulesKey !== lastRulesKey;
+            const defaultChanged =
+                prev.defaultPlaybackRate !== s.defaultPlaybackRate;
+            if (rulesChanged || defaultChanged) {
                 lastRulesKey = newRulesKey;
-                void applyAutomationIfAny(s);
+                // Only enforce if no user override is active
+                if (!hasUserOverride()) enforceAutomation(s);
             }
-            // Rebind shortcuts to use latest settings
-            unbind();
-            unbind = bindShortcuts(s);
         });
 
-        // Send initial rate to popup if it's listening
+        const reapply = () => {
+            // New navigation → clear override so rules can apply for the new video
+            userOverrideRate = null;
+            setTimeout(() => {
+                onVideoReady(() => enforceAutomation(settings));
+            }, 100);
+        };
+        window.addEventListener("yt-navigate-finish", reapply, true);
+        window.addEventListener("popstate", reapply, true);
+        const titleEl = document.querySelector("title");
+        if (titleEl) {
+            const titleObserver = new MutationObserver(reapply);
+            titleObserver.observe(titleEl, { childList: true });
+        }
+        const ogTitle = document.querySelector('meta[property="og:title"]');
+        if (ogTitle) {
+            const ogObserver = new MutationObserver(reapply);
+            ogObserver.observe(ogTitle, {
+                attributes: true,
+                attributeFilter: ["content"],
+            });
+        }
+
         const current = getPlaybackRate();
         if (current !== null) {
             void sendMessage({ type: "CURRENT_PLAYBACK_RATE", rate: current });
         }
     });
 
-    onMessage((message) => {
+    onMessage((message, _sender, sendResponse) => {
         if (message.type === "SET_PLAYBACK_RATE") {
-            setPlaybackRate(message.rate);
+            userOverrideRate = Math.max(0.1, Number(message.rate) || 1);
+            if (cancelAutomation) cancelAutomation();
+            setPlaybackRate(userOverrideRate);
+            const vid = getVideoIdFromUrl(location.href);
+            if (vid)
+                void sendMessage({
+                    type: "SAVE_TAB_VIDEO_RATE",
+                    videoId: vid,
+                    rate: userOverrideRate,
+                });
         } else if (message.type === "GET_PLAYBACK_RATE") {
             const r = getPlaybackRate();
             if (r !== null) {
                 void sendMessage({ type: "CURRENT_PLAYBACK_RATE", rate: r });
             }
+        } else if (message.type === "REAPPLY_AUTOMATION") {
+            void getSettings().then((s) => enforceAutomation(s));
+            if (sendResponse) sendResponse({ ok: true });
+            return true;
+        } else if (message.type === "PAUSE_AUTOMATION") {
+            const ms = Math.max(0, Number(message.ms ?? 5000));
+            automationPauseUntil = Date.now() + ms;
+            if (sendResponse) sendResponse({ ok: true });
+            return true;
         }
     });
 }
 
 void init();
+

@@ -56,6 +56,43 @@ export const SettingsTab = () => {
                 <span>Remember last used speed per channel</span>
             </div>
 
+            <div className="flex items-center gap-2 text-sm">
+                <input
+                    type="checkbox"
+                    checked={settings.overlay.visible || settings.showOverlay}
+                    onChange={async (e) => {
+                        const patch = {
+                            overlay: {
+                                ...settings.overlay,
+                                visible: e.target.checked,
+                            },
+                            showOverlay: e.target.checked,
+                        } as ExtensionSettings;
+                        await setSettings(patch);
+                        setLocal({ ...settings, ...patch });
+                    }}
+                />
+                <span>Show in-player controller overlay</span>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm">
+                <input
+                    type="checkbox"
+                    checked={settings.overlay.autoHide}
+                    onChange={async (e) => {
+                        const patch = {
+                            overlay: {
+                                ...settings.overlay,
+                                autoHide: e.target.checked,
+                            },
+                        } as ExtensionSettings;
+                        await setSettings(patch);
+                        setLocal({ ...settings, ...patch });
+                    }}
+                />
+                <span>Auto-hide overlay until hovered</span>
+            </div>
+
             <div className="flex items-center gap-2">
                 <button
                     className="px-3 py-2 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800"

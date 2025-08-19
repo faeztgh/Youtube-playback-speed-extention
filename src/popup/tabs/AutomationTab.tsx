@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
     AutomationRule,
     ExtensionSettings,
     getSettings,
     setSettings,
 } from "../../shared/storage";
+import { sendMessage } from "../../shared/messaging";
 
 const newRule = (): AutomationRule => ({
     id: crypto.randomUUID(),
@@ -16,6 +17,7 @@ const newRule = (): AutomationRule => ({
 export const AutomationTab = () => {
     const [settings, setLocal] = useState<ExtensionSettings | null>(null);
     const [draft, setDraft] = useState<AutomationRule>(newRule());
+    const [drafts, setDrafts] = useState<Record<string, AutomationRule>>({});
 
     // Multi-add state
     const [multiType, setMultiType] =
@@ -28,18 +30,21 @@ export const AutomationTab = () => {
         void getSettings().then(setLocal);
     }, []);
 
-    const update = (patch: Partial<ExtensionSettings>) => {
+    const update = async (patch: Partial<ExtensionSettings>) => {
         if (!settings) return;
         const next = { ...settings, ...patch } as ExtensionSettings;
         setLocal(next);
-        void setSettings(patch);
+        await setSettings(patch);
+        try {
+            await sendMessage({ type: "REAPPLY_AUTOMATION" });
+        } catch {}
     };
 
     if (!settings) return null;
 
     const add = () => {
         if (!draft.pattern.trim()) return;
-        update({
+        void update({
             rules: [
                 ...settings.rules,
                 { ...draft, speed: Number(draft.speed) },
@@ -49,13 +54,13 @@ export const AutomationTab = () => {
     };
 
     const remove = (id: string) =>
-        update({ rules: settings.rules.filter((r) => r.id !== id) });
+        void update({ rules: settings.rules.filter((r) => r.id !== id) });
 
     const edit = (id: string, patch: Partial<AutomationRule>) => {
         const rules = settings.rules.map((r) =>
             r.id === id ? { ...r, ...patch } : r
         );
-        update({ rules });
+        void update({ rules });
     };
 
     const addMultiple = () => {
@@ -70,7 +75,7 @@ export const AutomationTab = () => {
             pattern: p,
             speed: Number(multiSpeed),
         }));
-        update({ rules: [...settings.rules, ...rules] });
+        void update({ rules: [...settings.rules, ...rules] });
         setMultiPatterns("");
     };
 
@@ -94,8 +99,39 @@ export const AutomationTab = () => {
             out.push({ id: crypto.randomUUID(), type, pattern, speed });
         }
         if (out.length === 0) return;
-        update({ rules: [...settings.rules, ...out] });
+        void update({ rules: [...settings.rules, ...out] });
         setBulkCSV("");
+    };
+
+    const startEdit = (rule: AutomationRule) => {
+        setDrafts((prev) => ({ ...prev, [rule.id]: { ...rule } }));
+    };
+
+    const updateDraft = (id: string, patch: Partial<AutomationRule>) => {
+        setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
+    };
+
+    const saveDraft = (id: string) => {
+        const d = drafts[id];
+        const base = settings.rules.find((r) => r.id === id);
+        if (!d || !base) return;
+        const pattern = d.pattern.trim();
+        const speed = Number(d.speed);
+        if (!pattern || !Number.isFinite(speed)) return;
+        edit(id, { type: d.type, pattern, speed });
+        setDrafts((prev) => {
+            const next = { ...prev };
+            delete next[id];
+            return next;
+        });
+    };
+
+    const cancelDraft = (id: string) => {
+        setDrafts((prev) => {
+            const next = { ...prev };
+            delete next[id];
+            return next;
+        });
     };
 
     return (
@@ -199,9 +235,10 @@ export const AutomationTab = () => {
                     Bulk import (CSV or tab: type,pattern,speed)
                 </h4>
                 <textarea
-                    className="w-full min-h-[120px] px-3 py-2 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm"
+                    className="w-full min-h[200px] px-3 py-2 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm"
                     placeholder={`Examples\nchannel,veritasium,1.5\ntitle,tutorial,1.75\nurl,youtu.be,1.25`}
                     value={bulkCSV}
+                    rows={5}
                     onChange={(e) => setBulkCSV(e.target.value)}
                 />
                 <div className="mt-2">
@@ -222,53 +259,94 @@ export const AutomationTab = () => {
                             No rules yet.
                         </div>
                     )}
-                    {settings.rules.map((r) => (
-                        <div
-                            key={r.id}
-                            className="grid grid-cols-12 items-center gap-2 rounded-md border border-gray-200 dark:border-neutral-800 p-2 text-sm"
-                        >
-                            <select
-                                className="col-span-3 px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
-                                value={r.type}
-                                onChange={(e) =>
-                                    edit(r.id, {
-                                        type: e.target
-                                            .value as AutomationRule["type"],
-                                    })
-                                }
+                    {settings.rules.map((r) => {
+                        const d = drafts[r.id] ?? r;
+                        const hasChanges =
+                            d.type !== r.type ||
+                            d.pattern !== r.pattern ||
+                            d.speed !== r.speed;
+                        const canSave =
+                            d.pattern.trim().length > 0 &&
+                            Number.isFinite(Number(d.speed)) &&
+                            hasChanges;
+                        const isEditing = Boolean(drafts[r.id]);
+                        return (
+                            <div
+                                key={r.id}
+                                className="grid grid-cols-12 items-center gap-2 rounded-md border border-gray-200 dark:border-neutral-800 p-2 text-sm"
                             >
-                                <option value="channel">
-                                    Channel contains
-                                </option>
-                                <option value="title">Title contains</option>
-                                <option value="url">URL contains</option>
-                            </select>
-                            <input
-                                className="col-span-5 px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
-                                value={r.pattern}
-                                onChange={(e) =>
-                                    edit(r.id, { pattern: e.target.value })
-                                }
-                            />
-                            <input
-                                type="number"
-                                step={0.05}
-                                className="col-span-2 px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
-                                value={r.speed}
-                                onChange={(e) =>
-                                    edit(r.id, {
-                                        speed: Number(e.target.value),
-                                    })
-                                }
-                            />
-                            <button
-                                className="col-span-2 px-2 py-1 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300"
-                                onClick={() => remove(r.id)}
-                            >
-                                Remove
-                            </button>
-                        </div>
-                    ))}
+                                <select
+                                    className="col-span-2 px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+                                    value={d.type}
+                                    onChange={(e) =>
+                                        updateDraft(r.id, {
+                                            type: e.target
+                                                .value as AutomationRule["type"],
+                                        })
+                                    }
+                                >
+                                    <option value="channel">
+                                        Channel contains
+                                    </option>
+                                    <option value="title">
+                                        Title contains
+                                    </option>
+                                    <option value="url">URL contains</option>
+                                </select>
+                                <input
+                                    className="col-span-4 px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+                                    value={d.pattern}
+                                    onChange={(e) =>
+                                        updateDraft(r.id, {
+                                            pattern: e.target.value,
+                                        })
+                                    }
+                                />
+                                <input
+                                    type="number"
+                                    step={0.05}
+                                    className="col-span-2 px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+                                    value={d.speed}
+                                    onChange={(e) =>
+                                        updateDraft(r.id, {
+                                            speed: Number(e.target.value),
+                                        })
+                                    }
+                                />
+                                {!isEditing && (
+                                    <button
+                                        className="col-span-1 px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800"
+                                        onClick={() => startEdit(r)}
+                                    >
+                                        Edit
+                                    </button>
+                                )}
+                                {isEditing && (
+                                    <button
+                                        className="col-span-1 px-2 py-1 rounded-md border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        onClick={() => saveDraft(r.id)}
+                                        disabled={!canSave}
+                                    >
+                                        Save
+                                    </button>
+                                )}
+                                {isEditing && (
+                                    <button
+                                        className="col-span-1 px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800"
+                                        onClick={() => cancelDraft(r.id)}
+                                    >
+                                        Cancel
+                                    </button>
+                                )}
+                                <button
+                                    className="w-fit px-2 py-1 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300"
+                                    onClick={() => remove(r.id)}
+                                >
+                                    Remove
+                                </button>
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
         </div>
