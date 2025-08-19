@@ -29,15 +29,6 @@ jobs:
             - name: Build
               run: pnpm run build
 
-            - name: Publish dist to extension branch
-              uses: peaceiris/actions-gh-pages@v3
-              with:
-                  github_token: ${{ secrets.GITHUB_TOKEN }}
-                  publish_dir: dist
-                  publish_branch: extension
-                  user_name: github-actions[bot]
-                  user_email: 41898282+github-actions[bot]@users.noreply.github.com
-
             - name: Copy dist to tracked folder
               run: |
                   rm -rf extension
