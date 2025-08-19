@@ -37,3 +37,15 @@ jobs:
                   publish_branch: extension
                   user_name: github-actions[bot]
                   user_email: 41898282+github-actions[bot]@users.noreply.github.com
+
+            - name: Copy dist to tracked folder
+              run: |
+                  rm -rf extension
+                  mkdir -p extension
+                  cp -R dist/* extension/
+
+            - name: Commit extension folder to master
+              uses: stefanzweifel/git-auto-commit-action@v5
+              with:
+                  commit_message: "chore: update built extension"
+                  file_pattern: extension/**
