@@ -1,0 +1,1 @@
+function c(o){const e=o<0?"-":"",r=Math.abs(o),a=Math.round(r*100)/100;let n=String(a);n.includes(".")&&(n=n.replace(/\.0+$/,"").replace(/(\.[0-9])0$/,"$1"));let t=`${e}${n}x`;if(t.length<=4)return t;const s=Math.round(r*10)/10;let $=String(s).replace(/\.0$/,"");return t=`${e}${$}x`,t.length<=4?t:`${e}${Math.round(r)}`}export{c as f};
