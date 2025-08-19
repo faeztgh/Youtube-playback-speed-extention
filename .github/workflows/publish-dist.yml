@@ -1,15 +1,15 @@
-name: CI
+name: Publish Dist Branch
 
 on:
     push:
         branches: [master]
-    pull_request:
-        branches: [master]
+
+permissions:
+    contents: write
 
 jobs:
-    build:
+    publish:
         runs-on: ubuntu-latest
-
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
@@ -26,15 +26,14 @@ jobs:
                   version: 9
                   run_install: true
 
-            - name: Lint
-              run: pnpm run lint || echo "No lint script; skipping"
-
             - name: Build
               run: pnpm run build
 
-            - name: Upload build artifact
-              uses: actions/upload-artifact@v4
+            - name: Publish dist to extension branch
+              uses: peaceiris/actions-gh-pages@v3
               with:
-                  name: extension-dist
-                  path: dist/
-                  if-no-files-found: error
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  publish_dir: dist
+                  publish_branch: extension
+                  user_name: github-actions[bot]
+                  user_email: 41898282+github-actions[bot]@users.noreply.github.com
