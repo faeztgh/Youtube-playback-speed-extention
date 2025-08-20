@@ -1,6 +1,6 @@
 # YouTube Playback Controller
 
-A Chrome extension to control YouTube playback speed with a beautiful popup and an in‑page overlay. It stays perfectly in sync with YouTube’s native speed controls and shows the current speed as a toolbar badge.
+A Chrome and Firefox extension to control YouTube playback speed with a beautiful popup and an in‑page overlay. It stays perfectly in sync with YouTube’s native speed controls and shows the current speed as a toolbar badge.
 
 ## Features
 
@@ -31,6 +31,11 @@ A Chrome extension to control YouTube playback speed with a beautiful popup and 
    - Click "Load unpacked" and select the `dist/` directory
    - Pin the extension via the puzzle icon so the popup and badge are visible
 
+   Load in Firefox:
+   - Open `about:debugging#/runtime/this-firefox`
+   - Click "Load Temporary Add-on..." and select any file inside `dist/` (e.g., `manifest.json`)
+   - Or use `npx web-ext run -s dist` for faster iteration
+
 For iterative development:
 ```bash
 pnpm run dev   # watches and rebuilds to dist/
@@ -42,6 +47,7 @@ After each rebuild, click the refresh icon on your extension card in `chrome://e
 
 - `pnpm run build` – production build to `dist/`
 - `pnpm run dev` – watch mode rebuilds to `dist/`
+- For Firefox dev, you can also run: `npx web-ext run -s dist`
 - `pnpm run lint` – ESLint (TypeScript + React)
 - `pnpm run lint:fix` – ESLint with auto‑fix
 - `pnpm run typecheck` – TypeScript type checking
@@ -51,7 +57,9 @@ After each rebuild, click the refresh icon on your extension card in `chrome://e
 
 ```
 public/manifest.json   # MV3 manifest (popup, options, background, content)
-src/background/        # Service worker logic (badge, enabling action, tab events)
+src/background/        # Background logic:
+                       # - Chrome: service worker
+                       # - Firefox: event page (fallback via background.scripts)
 src/content/           # In‑page overlay, syncing with <video>, keyboard shortcuts
 src/popup/             # Popup UI (tabs: General, Profiles, Automation, Settings)
 src/options/           # Full settings dashboard (beautiful sidebar layout)
@@ -64,7 +72,7 @@ Key files:
 - `src/shared/youtube.ts`: get/set playback rate, reverse playback support, video readiness
 - `src/content/index.tsx`: binds to the active video’s `ratechange`, rebinding when YouTube swaps the element; broadcasts speed, saves default automatically
 - `src/popup/App.tsx`: popup UI; applies speed to the active tab; requests and listens for current speed
-- `src/background/index.ts`: keeps the action enabled on all tabs (so popup always opens); updates/clears badge appropriately
+- `src/background/index.ts`: keeps the action enabled on all tabs; updates/clears badge; provides Firefox fallback for session-like storage
 
 
 ## Settings overview
@@ -85,6 +93,13 @@ All settings auto‑save.
 - Updates immediately when speed changes via YouTube UI, popup, overlay, or shortcuts.
 - Clears on non‑YouTube pages, but the popup remains available everywhere.
 
+
+## Firefox compatibility
+
+- Manifest uses both `background.service_worker` (Chrome) and `background.scripts` (Firefox) with `preferred_environment` so each browser picks the right mode.
+- `chrome.storage.session` is emulated on Firefox via `storage.local`; ephemeral keys are cleared on startup/installed.
+- `browser` namespace shim is used where needed; APIs are feature-detected (e.g., `scripting.executeScript`).
+- If badge colors don’t change on older Firefox, text color fallback is ignored.
 
 ## Troubleshooting
 

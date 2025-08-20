@@ -5,6 +5,9 @@ import {
     getSettings,
     setSettings,
 } from "../../shared/storage";
+import { CheckCircle2, Plus, Trash2, Play } from "lucide-react";
+import { Input } from "../../components/Input";
+import { ActionButton } from "../../components/ActionButton";
 
 export const ProfilesTab = () => {
     const [settings, setLocal] = useState<ExtensionSettings | null>(null);
@@ -75,8 +78,7 @@ export const ProfilesTab = () => {
                             </option>
                         ))}
                     </select>
-                    <button
-                        className="px-3 py-1.5 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800"
+                    <ActionButton
                         onClick={() => {
                             const p = settings.profiles.find(
                                 (x) => x.name === settings.activeProfileName
@@ -84,8 +86,9 @@ export const ProfilesTab = () => {
                             if (p) applyProfile(p);
                         }}
                     >
-                        Apply
-                    </button>
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>Apply</span>
+                    </ActionButton>
                 </div>
             </div>
 
@@ -94,19 +97,18 @@ export const ProfilesTab = () => {
                     Create new profile
                 </h4>
                 <div className="flex gap-2">
-                    <input
-                        className="flex-1 px-3 py-2 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+                    <Input
+                        className="flex-1"
                         placeholder="Profile name"
                         value={newName}
                         onChange={(e) => setNewName(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && addProfile()}
+                        uiSize="md"
                     />
-                    <button
-                        className="px-3 py-2 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800"
-                        onClick={addProfile}
-                    >
-                        Add
-                    </button>
+                    <ActionButton onClick={addProfile}>
+                        <Plus className="w-4 h-4" />
+                        <span>Add</span>
+                    </ActionButton>
                 </div>
             </div>
 
@@ -131,18 +133,17 @@ export const ProfilesTab = () => {
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <button
-                                    className="px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800 text-sm"
-                                    onClick={() => applyProfile(p)}
-                                >
-                                    Use
-                                </button>
-                                <button
-                                    className="px-2 py-1 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300 text-sm"
+                                <ActionButton onClick={() => applyProfile(p)}>
+                                    <Play className="w-4 h-4" />
+                                    <span>Use</span>
+                                </ActionButton>
+                                <ActionButton
+                                    variant="danger"
                                     onClick={() => removeProfile(p.name)}
                                 >
-                                    Remove
-                                </button>
+                                    <Trash2 className="w-4 h-4" />
+                                    <span>Remove</span>
+                                </ActionButton>
                             </div>
                         </div>
                     ))}

@@ -9,9 +9,23 @@ export type Message =
     | { type: "FETCH_TAB_VIDEO_RATE"; videoId: string }
     | { type: "PAUSE_AUTOMATION"; ms?: number };
 
+// Simple namespace polyfill for cross-browser compatibility
+if (
+    typeof (globalThis as any).browser === "undefined" &&
+    typeof chrome !== "undefined"
+) {
+    (globalThis as any).browser = chrome as any;
+}
+
 export function sendMessage<T extends Message>(message: T): Promise<any> {
+    // Prefer promise-based API if available
+    const b: any = (globalThis as any).browser ?? chrome;
+    if (b?.runtime?.sendMessage.length === 1) {
+        // Promise-based
+        return b.runtime.sendMessage(message);
+    }
     return new Promise((resolve) => {
-        chrome.runtime.sendMessage(message, (response) => resolve(response));
+        b.runtime.sendMessage(message, (response: any) => resolve(response));
     });
 }
 
@@ -22,8 +36,9 @@ export function onMessage(
         sendResponse?: (response?: any) => void
     ) => boolean | void
 ) {
-    chrome.runtime.onMessage.addListener(
-        (message: Message, sender, sendResponse) =>
+    const b: any = (globalThis as any).browser ?? chrome;
+    b.runtime.onMessage.addListener(
+        (message: Message, sender: any, sendResponse: any) =>
             handler(message, sender, sendResponse) as any
     );
 }

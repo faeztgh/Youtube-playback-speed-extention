@@ -25,7 +25,7 @@ export const PresetList = ({
                 const base =
                     "px-3 py-2 flex justify-between items-center rounded-full border shadow-sm text-sm transition active:scale-[.98]";
                 const theme = matched
-                    ? "border-transparent bg-gradient-to-br from-indigo-500 via-blue-500 to-purple-500 text-white"
+                    ? "border-transparent bg-gradient-to-br from-red-500 via-red-600 to-red-700 text-white"
                     : "border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800";
                 return (
                     <div key={r} className="flex items-center gap-1">

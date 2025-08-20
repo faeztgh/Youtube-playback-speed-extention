@@ -6,6 +6,8 @@ import {
     setSettings,
 } from "../../shared/storage";
 import { sendMessage } from "../../shared/messaging";
+import { Plus, Upload, Pencil, Save, X, Trash2 } from "lucide-react";
+import { ActionButton } from "../../components/ActionButton";
 
 const newRule = (): AutomationRule => ({
     id: crypto.randomUUID(),
@@ -137,10 +139,10 @@ export const AutomationTab = () => {
     return (
         <div className="mt-3 space-y-5">
             <div>
-                <h4 className="text-sm font-semibold mb-2">Add rule</h4>
-                <div className="grid grid-cols-3 gap-2 text-sm">
+                <h4 className="mb-2 text-sm font-semibold">Add rule</h4>
+                <div className="flex flex-wrap gap-2 text-sm">
                     <select
-                        className="px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+                        className="px-2 py-1 bg-white border border-gray-200 rounded-md dark:border-neutral-800 dark:bg-neutral-900 flex-[1_1_160px] min-w-[160px]"
                         value={draft.type}
                         onChange={(e) =>
                             setDraft({
@@ -154,18 +156,18 @@ export const AutomationTab = () => {
                         <option value="url">URL contains</option>
                     </select>
                     <input
-                        className="px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+                        className="px-2 py-1 bg-white border border-gray-200 rounded-md dark:border-neutral-800 dark:bg-neutral-900 flex-[2_1_260px] min-w-[200px] flex-grow"
                         placeholder="Pattern"
                         value={draft.pattern}
                         onChange={(e) =>
                             setDraft({ ...draft, pattern: e.target.value })
                         }
                     />
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2 flex-[1_1_160px] min-w-[140px]">
                         <input
                             type="number"
                             step={0.05}
-                            className="flex-1 px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+                            className="px-2 py-1 bg-white border border-gray-200 rounded-md w-fit dark:border-neutral-800 dark:bg-neutral-900"
                             placeholder="Speed"
                             value={draft.speed}
                             onChange={(e) =>
@@ -175,23 +177,21 @@ export const AutomationTab = () => {
                                 })
                             }
                         />
-                        <button
-                            className="px-3 py-1.5 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800"
-                            onClick={add}
-                        >
-                            Add
-                        </button>
+                        <ActionButton onClick={add}>
+                            <Plus className="w-4 h-4" />
+                            <span>Add</span>
+                        </ActionButton>
                     </div>
                 </div>
             </div>
 
             <div>
-                <h4 className="text-sm font-semibold mb-2">
+                <h4 className="mb-2 text-sm font-semibold">
                     Add multiple patterns (same speed)
                 </h4>
-                <div className="grid grid-cols-3 gap-2 text-sm">
+                <div className="flex flex-wrap gap-2 text-sm">
                     <select
-                        className="px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+                        className="px-2 py-1 bg-white border border-gray-200 rounded-md dark:border-neutral-800 dark:bg-neutral-900 flex-[1_1_160px] min-w-[160px]"
                         value={multiType}
                         onChange={(e) =>
                             setMultiType(
@@ -204,34 +204,32 @@ export const AutomationTab = () => {
                         <option value="url">URL contains</option>
                     </select>
                     <input
-                        className="px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+                        className="px-2 py-1 bg-white border border-gray-200 rounded-md dark:border-neutral-800 dark:bg-neutral-900 flex-[2_1_260px] min-w-[200px] flex-grow"
                         placeholder="Comma or newline separated patterns"
                         value={multiPatterns}
                         onChange={(e) => setMultiPatterns(e.target.value)}
                     />
-                    <div className="flex gap-2">
+                    <div className="flex items-center gap-2 flex-[1_1_160px] min-w-[140px]">
                         <input
                             type="number"
                             step={0.05}
-                            className="flex-1 px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+                            className="px-2 py-1 bg-white border border-gray-200 rounded-md w-fit dark:border-neutral-800 dark:bg-neutral-900"
                             placeholder="Speed"
                             value={multiSpeed}
                             onChange={(e) =>
                                 setMultiSpeed(Number(e.target.value))
                             }
                         />
-                        <button
-                            className="px-3 py-1.5 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800"
-                            onClick={addMultiple}
-                        >
-                            Add
-                        </button>
+                        <ActionButton onClick={addMultiple}>
+                            <Plus className="w-4 h-4" />
+                            <span>Add</span>
+                        </ActionButton>
                     </div>
                 </div>
             </div>
 
             <div>
-                <h4 className="text-sm font-semibold mb-2">
+                <h4 className="mb-2 text-sm font-semibold">
                     Bulk import (CSV or tab: type,pattern,speed)
                 </h4>
                 <textarea
@@ -242,17 +240,15 @@ export const AutomationTab = () => {
                     onChange={(e) => setBulkCSV(e.target.value)}
                 />
                 <div className="mt-2">
-                    <button
-                        className="px-3 py-1.5 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800"
-                        onClick={importCSV}
-                    >
-                        Import
-                    </button>
+                    <ActionButton onClick={importCSV}>
+                        <Upload className="w-4 h-4" />
+                        <span>Import</span>
+                    </ActionButton>
                 </div>
             </div>
 
             <div>
-                <h4 className="text-sm font-semibold mb-2">Rules</h4>
+                <h4 className="mb-2 text-sm font-semibold">Rules</h4>
                 <div className="space-y-2">
                     {settings.rules.length === 0 && (
                         <div className="text-sm text-neutral-500">
@@ -273,10 +269,10 @@ export const AutomationTab = () => {
                         return (
                             <div
                                 key={r.id}
-                                className="grid grid-cols-12 items-center gap-2 rounded-md border border-gray-200 dark:border-neutral-800 p-2 text-sm"
+                                className="flex flex-wrap items-center gap-2 p-2 text-sm border border-gray-200 rounded-md dark:border-neutral-800"
                             >
                                 <select
-                                    className="col-span-2 px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+                                    className="px-2 py-1 bg-white border border-gray-200 rounded-md dark:border-neutral-800 dark:bg-neutral-900 flex-[1_1_160px] min-w-[160px]"
                                     value={d.type}
                                     onChange={(e) =>
                                         updateDraft(r.id, {
@@ -294,7 +290,7 @@ export const AutomationTab = () => {
                                     <option value="url">URL contains</option>
                                 </select>
                                 <input
-                                    className="col-span-4 px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+                                    className="px-2 py-1 bg-white border border-gray-200 rounded-md dark:border-neutral-800 dark:bg-neutral-900 flex-[2_1_260px] min-w-[200px] flex-grow"
                                     value={d.pattern}
                                     onChange={(e) =>
                                         updateDraft(r.id, {
@@ -305,7 +301,7 @@ export const AutomationTab = () => {
                                 <input
                                     type="number"
                                     step={0.05}
-                                    className="col-span-2 px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900"
+                                    className="w-24 px-2 py-1 bg-white border border-gray-200 rounded-md dark:border-neutral-800 dark:bg-neutral-900"
                                     value={d.speed}
                                     onChange={(e) =>
                                         updateDraft(r.id, {
@@ -314,36 +310,36 @@ export const AutomationTab = () => {
                                     }
                                 />
                                 {!isEditing && (
-                                    <button
-                                        className="col-span-1 px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800"
-                                        onClick={() => startEdit(r)}
-                                    >
-                                        Edit
-                                    </button>
+                                    <ActionButton onClick={() => startEdit(r)}>
+                                        <Pencil className="w-4 h-4" />
+                                        <span>Edit</span>
+                                    </ActionButton>
                                 )}
                                 {isEditing && (
-                                    <button
-                                        className="col-span-1 px-2 py-1 rounded-md border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    <ActionButton
+                                        variant="success"
                                         onClick={() => saveDraft(r.id)}
                                         disabled={!canSave}
                                     >
-                                        Save
-                                    </button>
+                                        <Save className="w-4 h-4" />
+                                        <span>Save</span>
+                                    </ActionButton>
                                 )}
                                 {isEditing && (
-                                    <button
-                                        className="col-span-1 px-2 py-1 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800"
+                                    <ActionButton
                                         onClick={() => cancelDraft(r.id)}
                                     >
-                                        Cancel
-                                    </button>
+                                        <X className="w-4 h-4" />
+                                        <span>Cancel</span>
+                                    </ActionButton>
                                 )}
-                                <button
-                                    className="w-fit px-2 py-1 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300"
+                                <ActionButton
+                                    variant="danger"
                                     onClick={() => remove(r.id)}
                                 >
-                                    Remove
-                                </button>
+                                    <Trash2 className="w-4 h-4" />
+                                    <span>Remove</span>
+                                </ActionButton>
                             </div>
                         );
                     })}
@@ -352,3 +348,4 @@ export const AutomationTab = () => {
         </div>
     );
 };
+

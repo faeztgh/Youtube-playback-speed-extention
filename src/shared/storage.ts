@@ -68,9 +68,11 @@ const DEFAULT_SETTINGS: ExtensionSettings = {
     rules: [],
 };
 
+const browserNs: any = (globalThis as any).browser ?? chrome;
+
 export async function getSettings(): Promise<ExtensionSettings> {
     return new Promise((resolve) => {
-        chrome.storage.sync.get(DEFAULT_SETTINGS, (items) => {
+        browserNs.storage.sync.get(DEFAULT_SETTINGS, (items: any) => {
             resolve(items as ExtensionSettings);
         });
     });
@@ -80,7 +82,7 @@ export async function setSettings(
     update: Partial<ExtensionSettings>
 ): Promise<void> {
     return new Promise((resolve) => {
-        chrome.storage.sync.set(update, () => resolve());
+        browserNs.storage.sync.set(update, () => resolve());
     });
 }
 
@@ -92,12 +94,12 @@ export function onSettingsChanged(
         area: string
     ) => {
         if (area !== "sync") return;
-        chrome.storage.sync.get(DEFAULT_SETTINGS, (items) => {
+        browserNs.storage.sync.get(DEFAULT_SETTINGS, (items: any) => {
             cb(items as ExtensionSettings);
         });
     };
-    chrome.storage.onChanged.addListener(listener);
-    return () => chrome.storage.onChanged.removeListener(listener);
+    browserNs.storage.onChanged.addListener(listener);
+    return () => browserNs.storage.onChanged.removeListener(listener);
 }
 
 export { DEFAULT_SETTINGS };

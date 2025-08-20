@@ -7,7 +7,7 @@ import { ProfilesTab } from "./tabs/ProfilesTab";
 import { AutomationTab } from "./tabs/AutomationTab";
 import { SettingsTab } from "./tabs/SettingsTab";
 import { GeneralTab } from "./tabs/GeneralTab";
-import { Plus, Save, Heart } from "lucide-react";
+import { Heart, Sliders, Wand2, UserCircle, Settings } from "lucide-react";
 import { onMessage, sendMessage } from "../shared/messaging";
 import { applyRate } from "../shared/rate";
 import { formatBadgeText } from "../shared/badge";
@@ -15,6 +15,9 @@ import { formatBadgeText } from "../shared/badge";
 function roundToTwo(n: number): number {
     return Math.round(n * 100) / 100;
 }
+
+// Namespace shim
+const browserNs: any = (globalThis as any).browser ?? chrome;
 
 export const App = () => {
     const [rates, setRates] = useState<number[]>(DEFAULT_SETTINGS.customRates);
@@ -44,14 +47,14 @@ export const App = () => {
             setTheme((s.theme as ThemeMode) ?? "system");
             setSliderRate(s.defaultPlaybackRate || 1);
 
-            const [tab] = await chrome.tabs.query({
+            const [tab] = await browserNs.tabs.query({
                 active: true,
                 currentWindow: true,
             });
             setActiveTabId(tab?.id ?? null);
             if (tab?.id) {
                 try {
-                    await chrome.tabs.sendMessage(tab.id, {
+                    await browserNs.tabs.sendMessage(tab.id, {
                         type: "GET_PLAYBACK_RATE",
                     });
                 } catch {}
@@ -80,17 +83,17 @@ export const App = () => {
                     // also update badge immediately from popup (fallback)
                     void (async () => {
                         try {
-                            await chrome.action.setBadgeBackgroundColor({
+                            await browserNs.action.setBadgeBackgroundColor({
                                 tabId: senderTabId,
                                 color: "#111827",
                             });
-                            if ((chrome.action as any).setBadgeTextColor) {
-                                await (chrome.action as any).setBadgeTextColor({
+                            if (browserNs.action?.setBadgeTextColor) {
+                                await browserNs.action.setBadgeTextColor({
                                     tabId: senderTabId,
                                     color: "#FFFFFF",
                                 });
                             }
-                            await chrome.action.setBadgeText({
+                            await browserNs.action.setBadgeText({
                                 tabId: senderTabId,
                                 text: formatBadgeText(message.rate),
                             });
@@ -138,14 +141,30 @@ export const App = () => {
     };
 
     const tabs = [
-        { key: "general", label: "General" },
-        { key: "profiles", label: "Profiles" },
-        { key: "automation", label: "Automation" },
-        { key: "settings", label: "Settings" },
+        {
+            key: "general",
+            label: "General",
+            icon: <Sliders className="w-4 h-4" />,
+        },
+        {
+            key: "profiles",
+            label: "Profiles",
+            icon: <UserCircle className="w-4 h-4" />,
+        },
+        {
+            key: "automation",
+            label: "Automation",
+            icon: <Wand2 className="w-4 h-4" />,
+        },
+        {
+            key: "settings",
+            label: "Settings",
+            icon: <Settings className="w-4 h-4" />,
+        },
     ];
 
     return (
-        <div className="min-w-[650px] p-0 font-sans text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-950">
+        <div className="min-w-[700px] p-0 font-sans text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-950">
             <div className="px-4 py-3 mb-0 bg-[#0f0f0f] text-white flex items-center justify-between">
                 <div className="flex flex-col leading-tight">
                     <span className="text-sm opacity-80">

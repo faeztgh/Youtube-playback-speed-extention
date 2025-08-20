@@ -11,6 +11,44 @@ function isSupportedUrl(url?: string | null): boolean {
     }
 }
 
+// Fallback for Firefox: emulate storage.session with storage.local
+const hasSessionStorage: boolean = !!(chrome.storage as any).session;
+const ephemeralPrefix = "tab:"; // our keys already use this prefix
+
+function setEphemeral<T>(key: string, value: T, cb?: () => void) {
+    const area: chrome.storage.StorageArea = (
+        hasSessionStorage
+            ? (chrome.storage as any).session
+            : chrome.storage.local
+    ) as chrome.storage.StorageArea;
+    area.set({ [key]: value }, () => cb && cb());
+}
+
+function getEphemeral<T>(key: string, cb: (value: T | undefined) => void) {
+    const area: chrome.storage.StorageArea = (
+        hasSessionStorage
+            ? (chrome.storage as any).session
+            : chrome.storage.local
+    ) as chrome.storage.StorageArea;
+    area.get(key, (items) =>
+        cb(items[key as keyof typeof items] as T | undefined)
+    );
+}
+
+function clearLocalEphemeralKeysIfNeeded() {
+    if (hasSessionStorage) return; // nothing to clear when session storage exists
+    try {
+        chrome.storage.local.get(null, (items) => {
+            const keys = Object.keys(items).filter((k) =>
+                k.startsWith(ephemeralPrefix)
+            );
+            if (keys.length) chrome.storage.local.remove(keys);
+        });
+    } catch {
+        // ignore
+    }
+}
+
 async function requestRateFromTab(tabId: number) {
     try {
         await chrome.tabs.sendMessage(tabId, { type: "GET_PLAYBACK_RATE" });
@@ -36,6 +74,7 @@ async function updateActionForTab(tabId: number, url?: string | null) {
 }
 
 chrome.runtime.onInstalled.addListener(() => {
+    clearLocalEphemeralKeysIfNeeded();
     chrome.tabs.query({}, (tabs) => {
         for (const t of tabs) {
             if (typeof t.id === "number") {
@@ -46,6 +85,7 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 chrome.runtime.onStartup?.addListener(() => {
+    clearLocalEphemeralKeysIfNeeded();
     chrome.tabs.query({}, (tabs) => {
         for (const t of tabs) {
             if (typeof t.id === "number") {
@@ -105,7 +145,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const tabId = sender?.tab?.id;
         if (typeof tabId === "number") {
             const key = `tab:${tabId}:video:${message.videoId}:rate`;
-            chrome.storage.session.set({ [key]: message.rate }, () => {
+            setEphemeral(key, message.rate, () => {
                 sendResponse({ ok: true });
             });
             return true;
@@ -115,8 +155,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const tabId = sender?.tab?.id;
         if (typeof tabId === "number") {
             const key = `tab:${tabId}:video:${message.videoId}:rate`;
-            chrome.storage.session.get(key, (items) => {
-                sendResponse({ rate: items[key] });
+            getEphemeral<number>(key, (value) => {
+                sendResponse({ rate: value });
             });
             return true;
         }

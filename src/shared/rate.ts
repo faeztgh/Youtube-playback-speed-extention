@@ -1,31 +1,33 @@
 import { setPlaybackRate } from "./youtube";
 import { formatBadgeText } from "./badge";
 
+const browserNs: any = (globalThis as any).browser ?? chrome;
+
 export async function applyRate(rate: number): Promise<void> {
     try {
         // Try the tab-messaging path (works from popup/background)
-        if (chrome?.tabs?.query) {
-            const [tab] = await chrome.tabs.query({
+        if (browserNs?.tabs?.query) {
+            const [tab] = await browserNs.tabs.query({
                 active: true,
                 currentWindow: true,
             });
             if (tab?.id) {
                 try {
-                    await chrome.tabs.sendMessage(tab.id, {
+                    await browserNs.tabs.sendMessage(tab.id, {
                         type: "SET_PLAYBACK_RATE",
                         rate,
                     });
-                    await chrome.action.setBadgeBackgroundColor({
+                    await browserNs.action.setBadgeBackgroundColor({
                         tabId: tab.id,
                         color: "#111827",
                     });
-                    if ((chrome.action as any).setBadgeTextColor) {
-                        await (chrome.action as any).setBadgeTextColor({
+                    if (browserNs.action?.setBadgeTextColor) {
+                        await browserNs.action.setBadgeTextColor({
                             tabId: tab.id,
                             color: "#FFFFFF",
                         });
                     }
-                    await chrome.action.setBadgeText({
+                    await browserNs.action.setBadgeText({
                         tabId: tab.id,
                         text: formatBadgeText(rate),
                     });
@@ -33,30 +35,34 @@ export async function applyRate(rate: number): Promise<void> {
                 } catch {
                     // Fallback: inject script to set rate directly if content script isn't ready
                     try {
-                        await chrome.scripting.executeScript({
-                            target: { tabId: tab.id },
-                            func: (r: number) => {
-                                const v = document.querySelector(
-                                    "video"
-                                ) as HTMLVideoElement | null;
-                                if (v) {
-                                    v.playbackRate = r;
-                                    v.dispatchEvent(new Event("ratechange"));
-                                }
-                            },
-                            args: [rate],
-                        });
-                        await chrome.action.setBadgeBackgroundColor({
+                        if (browserNs.scripting?.executeScript) {
+                            await browserNs.scripting.executeScript({
+                                target: { tabId: tab.id },
+                                func: (r: number) => {
+                                    const v = document.querySelector(
+                                        "video"
+                                    ) as HTMLVideoElement | null;
+                                    if (v) {
+                                        v.playbackRate = r;
+                                        v.dispatchEvent(
+                                            new Event("ratechange")
+                                        );
+                                    }
+                                },
+                                args: [rate],
+                            });
+                        }
+                        await browserNs.action.setBadgeBackgroundColor({
                             tabId: tab.id,
                             color: "#111827",
                         });
-                        if ((chrome.action as any).setBadgeTextColor) {
-                            await (chrome.action as any).setBadgeTextColor({
+                        if (browserNs.action?.setBadgeTextColor) {
+                            await browserNs.action.setBadgeTextColor({
                                 tabId: tab.id,
                                 color: "#FFFFFF",
                             });
                         }
-                        await chrome.action.setBadgeText({
+                        await browserNs.action.setBadgeText({
                             tabId: tab.id,
                             text: formatBadgeText(rate),
                         });

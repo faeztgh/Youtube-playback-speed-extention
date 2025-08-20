@@ -5,6 +5,8 @@ import {
     getSettings,
     setSettings,
 } from "../../shared/storage";
+import { Download, Upload, RotateCcw } from "lucide-react";
+import { ActionButton } from "../../components/ActionButton";
 
 export const SettingsTab = () => {
     const [settings, setLocal] = useState<ExtensionSettings | null>(null);
@@ -94,12 +96,10 @@ export const SettingsTab = () => {
             </div>
 
             <div className="flex items-center gap-2">
-                <button
-                    className="px-3 py-2 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800"
-                    onClick={exportJson}
-                >
-                    Export settings
-                </button>
+                <ActionButton onClick={exportJson}>
+                    <Download className="w-4 h-4" />
+                    <span>Export settings</span>
+                </ActionButton>
                 <input
                     ref={fileRef}
                     type="file"
@@ -109,18 +109,18 @@ export const SettingsTab = () => {
                         e.target.files && importJson(e.target.files[0])
                     }
                 />
-                <button
-                    className="px-3 py-2 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:bg-gray-50 dark:hover:bg-neutral-800"
-                    onClick={() => fileRef.current?.click()}
-                >
-                    Import settings
-                </button>
-                <button
-                    className="ml-auto px-3 py-2 rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300"
+                <ActionButton onClick={() => fileRef.current?.click()}>
+                    <Upload className="w-4 h-4" />
+                    <span>Import settings</span>
+                </ActionButton>
+                <ActionButton
+                    variant="danger"
+                    className="ml-auto"
                     onClick={resetDefaults}
                 >
-                    Reset to defaults
-                </button>
+                    <RotateCcw className="w-4 h-4" />
+                    <span>Reset to defaults</span>
+                </ActionButton>
             </div>
         </div>
     );

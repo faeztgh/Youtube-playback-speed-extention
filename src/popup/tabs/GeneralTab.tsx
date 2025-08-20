@@ -1,7 +1,9 @@
 import { SpeedSlider } from "../../components/SpeedSlider";
 import { PresetList } from "../../components/PresetList";
-import { Button } from "../../components/Button";
 import { Panel } from "../../components/Panel";
+import { Plus, Save, PlusCircle } from "lucide-react";
+import { Input } from "../../components/Input";
+import { ActionButton } from "../../components/ActionButton";
 
 export type GeneralTabProps = {
     rates: number[];
@@ -50,8 +52,9 @@ export const GeneralTab = (props: GeneralTabProps) => {
                     currentRate={props.sliderRate}
                 />
                 <div className="flex gap-2 mt-3">
-                    <input
+                    <Input
                         type="number"
+                        uiSize="md"
                         step="0.05"
                         placeholder="Custom speed (e.g. 1.25)"
                         value={props.customRateInput}
@@ -61,18 +64,27 @@ export const GeneralTab = (props: GeneralTabProps) => {
                         onKeyDown={(e) => {
                             if (e.key === "Enter") props.addCustomRate();
                         }}
-                        className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-md dark:border-neutral-800 dark:bg-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-300 dark:focus:ring-neutral-700"
+                        className="flex-1 placeholder:text-neutral-400"
                         inputMode="decimal"
                         aria-label="Custom speed"
                     />
-                    <Button onClick={props.addCustomRate}>Add</Button>
-                    <Button onClick={props.addRate}>+0.25</Button>
+                    <ActionButton onClick={props.addCustomRate}>
+                        <Plus className="w-4 h-4" />
+                        <span className="ml-1">Add</span>
+                    </ActionButton>
+                    <ActionButton onClick={props.addRate}>
+                        <PlusCircle className="w-4 h-4" />
+                        <span className="ml-1">+0.25</span>
+                    </ActionButton>
                 </div>
             </div>
 
             <div className="flex items-center gap-2 mt-4">
                 <div className="ml-auto">
-                    <Button onClick={props.onSave}>Save</Button>
+                    <ActionButton onClick={props.onSave}>
+                        <Save className="w-4 h-4" />
+                        <span className="ml-1">Save</span>
+                    </ActionButton>
                 </div>
             </div>
         </div>
