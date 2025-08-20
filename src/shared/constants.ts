@@ -3,14 +3,7 @@ export const YT_ALLOWED_SPEEDS: number[] = [
 ];
 
 export function snapToYouTubeSpeed(value: number): number {
-    const allowed = YT_ALLOWED_SPEEDS;
-    const clamped = Math.min(
-        allowed[allowed.length - 1],
-        Math.max(allowed[0], value)
-    );
-    return allowed.reduce(
-        (prev, curr) =>
-            Math.abs(curr - clamped) < Math.abs(prev - clamped) ? curr : prev,
-        allowed[0]
-    );
+    // Allow any speed value instead of clamping to predefined speeds
+    // This enables users to use custom speeds they've configured
+    return Math.max(0.1, value);
 }
