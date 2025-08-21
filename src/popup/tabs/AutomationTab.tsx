@@ -167,7 +167,7 @@ export const AutomationTab = () => {
                         <input
                             type="number"
                             step={0.05}
-                            className="px-2 py-1 bg-white border border-gray-200 rounded-md w-fit dark:border-neutral-800 dark:bg-neutral-900"
+                            className="px-2 py-1 bg-white max-w-[50px] border border-gray-200 rounded-md w-fit dark:border-neutral-800 dark:bg-neutral-900"
                             placeholder="Speed"
                             value={draft.speed}
                             onChange={(e) =>
@@ -213,7 +213,7 @@ export const AutomationTab = () => {
                         <input
                             type="number"
                             step={0.05}
-                            className="px-2 py-1 bg-white border border-gray-200 rounded-md w-fit dark:border-neutral-800 dark:bg-neutral-900"
+                            className="px-2 py-1 max-w-[50px] bg-white border border-gray-200 rounded-md w-fit dark:border-neutral-800 dark:bg-neutral-900"
                             placeholder="Speed"
                             value={multiSpeed}
                             onChange={(e) =>
@@ -301,7 +301,7 @@ export const AutomationTab = () => {
                                 <input
                                     type="number"
                                     step={0.05}
-                                    className="w-24 px-2 py-1 bg-white border border-gray-200 rounded-md dark:border-neutral-800 dark:bg-neutral-900"
+                                    className="w-24 px-2 py-1 max-w-[50px] bg-white border border-gray-200 rounded-md dark:border-neutral-800 dark:bg-neutral-900"
                                     value={d.speed}
                                     onChange={(e) =>
                                         updateDraft(r.id, {
@@ -348,4 +348,3 @@ export const AutomationTab = () => {
         </div>
     );
 };
-
