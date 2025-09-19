@@ -27,7 +27,7 @@
         "rimraf": "^6.0.1",
         "sharp": "^0.34.4",
         "typescript": "^5.5.4",
-        "vite": "^7.1.5",
+        "vite": "^7.1.6",
         "tailwindcss": "^4.1.13",
         "postcss": "^8.4.47",
         "autoprefixer": "^10.4.20",
