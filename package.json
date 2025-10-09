@@ -34,7 +34,7 @@
         "eslint": "^9.35.0",
         "@eslint/js": "^9.36.0",
         "@typescript-eslint/parser": "^8.45.0",
-        "@typescript-eslint/eslint-plugin": "^8.43.0",
+        "@typescript-eslint/eslint-plugin": "^8.45.0",
         "eslint-plugin-react": "^7.34.3",
         "eslint-plugin-react-hooks": "^6.1.1",
         "concurrently": "^9.2.1",
