@@ -47,7 +47,7 @@ jobs:
                   (cd extension && zip -r "../artifacts/extension-folder-v${{ steps.meta.outputs.version }}.zip" .)
 
             - name: Upload artifact
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v5
               with:
                   name: yt-playback-controller-v${{ steps.meta.outputs.version }}
                   path: artifacts/*.zip
