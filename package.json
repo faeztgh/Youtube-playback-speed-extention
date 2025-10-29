@@ -38,7 +38,7 @@
         "eslint-plugin-react": "^7.34.3",
         "eslint-plugin-react-hooks": "^7.0.1",
         "concurrently": "^9.2.1",
-        "cross-env": "^10.0.0",
+        "cross-env": "^10.1.0",
         "@types/node": "24.9.2"
     },
     "engines": {
