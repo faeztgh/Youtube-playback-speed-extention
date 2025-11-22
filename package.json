@@ -30,7 +30,7 @@
         "vite": "^7.1.12",
         "tailwindcss": "^4.1.17",
         "postcss": "^8.4.47",
-        "autoprefixer": "^10.4.20",
+        "autoprefixer": "^10.4.22",
         "eslint": "^9.39.1",
         "@eslint/js": "^9.39.1",
         "@typescript-eslint/parser": "^8.46.3",
