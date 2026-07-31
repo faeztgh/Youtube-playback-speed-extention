@@ -1,12 +1,13 @@
+import { Download, RotateCcw, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { ActionButton } from "../../components/ActionButton";
+import { Switch } from "../../components/Switch";
 import {
-    ExtensionSettings,
     DEFAULT_SETTINGS,
+    type ExtensionSettings,
     getSettings,
     setSettings,
 } from "../../shared/storage";
-import { Download, Upload, RotateCcw } from "lucide-react";
-import { ActionButton } from "../../components/ActionButton";
 
 export const SettingsTab = () => {
     const [settings, setLocal] = useState<ExtensionSettings | null>(null);
@@ -43,56 +44,36 @@ export const SettingsTab = () => {
 
     return (
         <div className="mt-3 space-y-4">
-            <div className="flex items-center gap-2 text-sm">
-                <input
-                    type="checkbox"
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <Switch
+                    aria-label="Remember last used speed per channel"
                     checked={settings.rememberLastPerChannel}
-                    onChange={async (e) => {
+                    onChange={async (checked) => {
                         const patch = {
-                            rememberLastPerChannel: e.target.checked,
+                            rememberLastPerChannel: checked,
                         };
                         await setSettings(patch);
                         setLocal({ ...settings, ...patch });
                     }}
                 />
                 <span>Remember last used speed per channel</span>
-            </div>
+            </label>
 
-            <div className="flex items-center gap-2 text-sm">
-                <input
-                    type="checkbox"
-                    checked={settings.overlay.visible || settings.showOverlay}
-                    onChange={async (e) => {
-                        const patch = {
-                            overlay: {
-                                ...settings.overlay,
-                                visible: e.target.checked,
-                            },
-                            showOverlay: e.target.checked,
-                        } as ExtensionSettings;
-                        await setSettings(patch);
-                        setLocal({ ...settings, ...patch });
-                    }}
-                />
-                <span>Show in-player controller overlay</span>
-            </div>
-
-            <div className="flex items-center gap-2 text-sm">
-                <input
-                    type="checkbox"
-                    checked={settings.overlay.autoHide}
-                    onChange={async (e) => {
-                        const patch = {
-                            overlay: {
-                                ...settings.overlay,
-                                autoHide: e.target.checked,
-                            },
-                        } as ExtensionSettings;
-                        await setSettings(patch);
-                        setLocal({ ...settings, ...patch });
-                    }}
-                />
-                <span>Auto-hide overlay until hovered</span>
+            <div className="text-sm">
+                <label className="flex items-center gap-2 cursor-pointer">
+                    <Switch
+                        aria-label="Show dislike counts on videos"
+                        checked={settings.showDislikeCount}
+                        onChange={async (checked) => {
+                            const patch = {
+                                showDislikeCount: checked,
+                            };
+                            await setSettings(patch);
+                            setLocal({ ...settings, ...patch });
+                        }}
+                    />
+                    <span>Show dislike counts on videos</span>
+                </label>
             </div>
 
             <div className="flex items-center gap-2">

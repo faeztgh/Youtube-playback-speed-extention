@@ -1,4 +1,4 @@
-import { forwardRef, InputHTMLAttributes } from "react";
+import { forwardRef, type InputHTMLAttributes } from "react";
 
 type InputSize = "sm" | "md";
 
@@ -21,7 +21,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 {...rest}
             />
         );
-    }
+    },
 );
 
 Input.displayName = "Input";

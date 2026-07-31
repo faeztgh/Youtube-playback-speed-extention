@@ -3,13 +3,20 @@ export type Message =
     | { type: "GET_PLAYBACK_RATE" }
     | { type: "CURRENT_PLAYBACK_RATE"; rate: number }
     | { type: "REAPPLY_AUTOMATION" }
-    | { type: "PING" }
-    | { type: "GET_TAB_ID" }
     | { type: "SAVE_TAB_VIDEO_RATE"; videoId: string; rate: number }
     | { type: "FETCH_TAB_VIDEO_RATE"; videoId: string }
-    | { type: "PAUSE_AUTOMATION"; ms?: number };
+    | { type: "PAUSE_AUTOMATION"; ms?: number }
+    | { type: "FETCH_DISLIKES"; videoId: string };
 
-// Simple namespace polyfill for cross-browser compatibility
+// Only `dislikes` is guaranteed; the rest pass through from the API and may be absent.
+export type DislikeData = {
+    dislikes: number;
+    likes?: number;
+    rating?: number;
+    viewCount?: number;
+};
+
+// Namespace polyfill for cross-browser compatibility
 if (
     typeof (globalThis as any).browser === "undefined" &&
     typeof chrome !== "undefined"
@@ -17,15 +24,16 @@ if (
     (globalThis as any).browser = chrome as any;
 }
 
+export const browserNs: any = (globalThis as any).browser ?? chrome;
+
 export function sendMessage<T extends Message>(message: T): Promise<any> {
-    // Prefer promise-based API if available
-    const b: any = (globalThis as any).browser ?? chrome;
-    if (b?.runtime?.sendMessage.length === 1) {
-        // Promise-based
-        return b.runtime.sendMessage(message);
+    if (browserNs?.runtime?.sendMessage.length === 1) {
+        return browserNs.runtime.sendMessage(message);
     }
     return new Promise((resolve) => {
-        b.runtime.sendMessage(message, (response: any) => resolve(response));
+        browserNs.runtime.sendMessage(message, (response: any) =>
+            resolve(response),
+        );
     });
 }
 
@@ -33,13 +41,11 @@ export function onMessage(
     handler: (
         message: Message,
         sender: chrome.runtime.MessageSender,
-        sendResponse?: (response?: any) => void
-    ) => boolean | void
+        sendResponse?: (response?: any) => void,
+    ) => boolean | void,
 ) {
-    const b: any = (globalThis as any).browser ?? chrome;
-    b.runtime.onMessage.addListener(
+    browserNs.runtime.onMessage.addListener(
         (message: Message, sender: any, sendResponse: any) =>
-            handler(message, sender, sendResponse) as any
+            handler(message, sender, sendResponse) as any,
     );
 }
-

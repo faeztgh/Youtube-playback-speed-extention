@@ -30,7 +30,6 @@ Thumbs.db
 *.swo
 
 # Caches
-.eslintcache
 .cache/
 .tmp/
 /temp/
@@ -41,3 +40,4 @@ Thumbs.db
 # Misc
 *.pid
 *.pid.lock 
+CLAUDE.md

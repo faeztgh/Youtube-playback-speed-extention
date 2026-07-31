@@ -1,13 +1,13 @@
+import { CheckCircle2, Play, Plus, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ActionButton } from "../../components/ActionButton";
+import { Input } from "../../components/Input";
 import {
-    ExtensionSettings,
-    PresetProfile,
+    type ExtensionSettings,
     getSettings,
+    type PresetProfile,
     setSettings,
 } from "../../shared/storage";
-import { CheckCircle2, Plus, Trash2, Play } from "lucide-react";
-import { Input } from "../../components/Input";
-import { ActionButton } from "../../components/ActionButton";
 
 export const ProfilesTab = () => {
     const [settings, setLocal] = useState<ExtensionSettings | null>(null);
@@ -66,7 +66,7 @@ export const ProfilesTab = () => {
                         value={settings.activeProfileName ?? ""}
                         onChange={(e) => {
                             const p = settings.profiles.find(
-                                (x) => x.name === e.target.value
+                                (x) => x.name === e.target.value,
                             );
                             if (p) applyProfile(p);
                         }}
@@ -81,7 +81,7 @@ export const ProfilesTab = () => {
                     <ActionButton
                         onClick={() => {
                             const p = settings.profiles.find(
-                                (x) => x.name === settings.activeProfileName
+                                (x) => x.name === settings.activeProfileName,
                             );
                             if (p) applyProfile(p);
                         }}

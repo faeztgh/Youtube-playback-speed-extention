@@ -1,3 +1,23 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Keep the existing JS config (content globs + class-based dark mode). */
+@config "../../tailwind.config.js";
+
+/* All interactive elements show a pointer cursor. */
+@layer base {
+    a[href],
+    button,
+    label,
+    summary,
+    [role="button"],
+    [role="tab"],
+    [role="switch"] {
+        cursor: pointer;
+    }
+
+    button:disabled,
+    [aria-disabled="true"],
+    [disabled] {
+        cursor: not-allowed;
+    }
+}

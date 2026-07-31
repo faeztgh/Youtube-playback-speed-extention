@@ -1,0 +1,17 @@
+# Lefthook git hooks. Installed via the package.json `prepare` script
+# (`lefthook install`) — used in place of Husky.
+pre-commit:
+    parallel: true
+    commands:
+        biome:
+            glob: "*.{ts,tsx,js,jsx,json,css}"
+            run: pnpm biome check --write --no-errors-on-unmatched {staged_files}
+            stage_fixed: true
+        typecheck:
+            glob: "*.{ts,tsx}"
+            run: pnpm typecheck
+
+commit-msg:
+    commands:
+        commitlint:
+            run: pnpm commitlint --edit {1}

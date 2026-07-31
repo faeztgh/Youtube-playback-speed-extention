@@ -1,4 +1,5 @@
 import { XCircle } from "lucide-react";
+import { cn } from "../shared/cn";
 
 export type PresetListProps = {
     presets: number[];
@@ -19,7 +20,7 @@ export const PresetList = ({
     currentRate = null,
 }: PresetListProps) => {
     return (
-        <div className={(className ?? "") + " flex flex-wrap gap-2"}>
+        <div className={cn(className, "flex flex-wrap gap-2")}>
             {presets.map((r) => {
                 const matched = isMatch(r, currentRate);
                 const base =
@@ -59,4 +60,3 @@ export const PresetList = ({
         </div>
     );
 };
-

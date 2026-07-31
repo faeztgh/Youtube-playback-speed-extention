@@ -1,34 +1,31 @@
+import { Heart, Settings, Sliders, UserCircle, Wand2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { getSettings, setSettings, DEFAULT_SETTINGS } from "../shared/storage";
+import { type TabKey, Tabs } from "../components/Tabs";
 import { ThemeToggle } from "../components/ThemeToggle";
-import type { ThemeMode } from "../shared/storage";
-import { Tabs, TabKey } from "../components/Tabs";
-import { ProfilesTab } from "./tabs/ProfilesTab";
-import { AutomationTab } from "./tabs/AutomationTab";
-import { SettingsTab } from "./tabs/SettingsTab";
-import { GeneralTab } from "./tabs/GeneralTab";
-import { Heart, Sliders, Wand2, UserCircle, Settings } from "lucide-react";
-import { onMessage, sendMessage } from "../shared/messaging";
+import { applyActionBadge } from "../shared/badge";
+import { browserNs, onMessage, sendMessage } from "../shared/messaging";
 import { applyRate } from "../shared/rate";
-import { formatBadgeText } from "../shared/badge";
+import type { ThemeMode } from "../shared/storage";
+import { DEFAULT_SETTINGS, getSettings, setSettings } from "../shared/storage";
+import { AutomationTab } from "./tabs/AutomationTab";
+import { GeneralTab } from "./tabs/GeneralTab";
+import { ProfilesTab } from "./tabs/ProfilesTab";
+import { SettingsTab } from "./tabs/SettingsTab";
 
 function roundToTwo(n: number): number {
     return Math.round(n * 100) / 100;
 }
 
-// Namespace shim
-const browserNs: any = (globalThis as any).browser ?? chrome;
-
 export const App = () => {
     const [rates, setRates] = useState<number[]>(DEFAULT_SETTINGS.customRates);
     const [defaultRate, setDefaultRate] = useState<number>(
-        DEFAULT_SETTINGS.defaultPlaybackRate
+        DEFAULT_SETTINGS.defaultPlaybackRate,
     );
     const [theme, setTheme] = useState<ThemeMode>(
-        (DEFAULT_SETTINGS.theme as ThemeMode) ?? "system"
+        (DEFAULT_SETTINGS.theme as ThemeMode) ?? "system",
     );
     const [sliderRate, setSliderRate] = useState<number>(
-        DEFAULT_SETTINGS.defaultPlaybackRate
+        DEFAULT_SETTINGS.defaultPlaybackRate,
     );
     const [customRateInput, setCustomRateInput] = useState<string>("");
     const [activeTab, setActiveTab] = useState<TabKey>("general");
@@ -73,30 +70,19 @@ export const App = () => {
     }, [theme]);
 
     useEffect(() => {
-        // Listen for rate broadcasts from the content script and sync our slider
         onMessage((message, sender) => {
             if (message.type === "CURRENT_PLAYBACK_RATE") {
                 const senderTabId = sender.tab?.id ?? null;
                 if (senderTabId && senderTabId === activeTabIdRef.current) {
                     setSliderRate(message.rate);
                     setDefaultRate(message.rate);
-                    // also update badge immediately from popup (fallback)
                     void (async () => {
                         try {
-                            await browserNs.action.setBadgeBackgroundColor({
-                                tabId: senderTabId,
-                                color: "#111827",
-                            });
-                            if (browserNs.action?.setBadgeTextColor) {
-                                await browserNs.action.setBadgeTextColor({
-                                    tabId: senderTabId,
-                                    color: "#FFFFFF",
-                                });
-                            }
-                            await browserNs.action.setBadgeText({
-                                tabId: senderTabId,
-                                text: formatBadgeText(message.rate),
-                            });
+                            await applyActionBadge(
+                                browserNs.action,
+                                senderTabId,
+                                message.rate,
+                            );
                         } catch {}
                     })();
                 }
@@ -107,7 +93,6 @@ export const App = () => {
     async function applyFromPopup(rate: number) {
         await sendMessage({ type: "PAUSE_AUTOMATION", ms: 10000 });
         await applyRate(rate);
-        // Persist immediately
         void setSettings({ defaultPlaybackRate: rate });
     }
 
@@ -122,8 +107,8 @@ export const App = () => {
     const addRate = () =>
         setRates((rs) =>
             Array.from(
-                new Set([...rs, roundToTwo((rs[rs.length - 1] ?? 1) + 0.25)])
-            ).sort((a, b) => a - b)
+                new Set([...rs, roundToTwo((rs[rs.length - 1] ?? 1) + 0.25)]),
+            ).sort((a, b) => a - b),
         );
 
     const addCustomRate = () => {
@@ -131,7 +116,7 @@ export const App = () => {
         if (!Number.isFinite(parsed) || parsed <= 0) return;
         const rounded = roundToTwo(parsed);
         setRates((rs) =>
-            Array.from(new Set([...rs, rounded])).sort((a, b) => a - b)
+            Array.from(new Set([...rs, rounded])).sort((a, b) => a - b),
         );
         setCustomRateInput("");
     };
@@ -164,7 +149,7 @@ export const App = () => {
     ];
 
     return (
-        <div className="min-w-[700px] p-0 font-sans text-neutral-900 dark:text-neutral-100 bg-white dark:bg-neutral-950">
+        <div className="p-0 font-sans bg-white min-w-175 text-neutral-900 dark:text-neutral-100 dark:bg-neutral-950">
             <div className="px-4 py-3 mb-0 bg-[#0f0f0f] text-white flex items-center justify-between">
                 <div className="flex flex-col leading-tight">
                     <span className="text-sm opacity-80">
@@ -176,7 +161,7 @@ export const App = () => {
                 </div>
                 <div className="flex items-center gap-3">
                     <a
-                        href="https://hamibash.com/faez"
+                        href="https://www.faez.pro/support"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white text-sm border border-white/15 transition active:scale-[.98]"
@@ -218,4 +203,3 @@ export const App = () => {
         </div>
     );
 };
-

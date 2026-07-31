@@ -9,8 +9,20 @@ export function formatBadgeText(rate: number): string {
     let withX = `${sign}${str}x`;
     if (withX.length <= 4) return withX;
     const to1 = Math.round(abs * 10) / 10;
-    let str1 = String(to1).replace(/\.0$/, "");
+    const str1 = String(to1).replace(/\.0$/, "");
     withX = `${sign}${str1}x`;
     if (withX.length <= 4) return withX;
     return `${sign}${Math.round(abs)}`;
+}
+
+export async function applyActionBadge(
+    action: any,
+    tabId: number,
+    rate: number,
+): Promise<void> {
+    await action.setBadgeBackgroundColor({ tabId, color: "#111827" });
+    if (action.setBadgeTextColor) {
+        await action.setBadgeTextColor({ tabId, color: "#FFFFFF" });
+    }
+    await action.setBadgeText({ tabId, text: formatBadgeText(rate) });
 }

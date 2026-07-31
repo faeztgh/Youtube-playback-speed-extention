@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { cn } from "../shared/cn";
 
 export type SpeedSliderProps = {
     label?: string;
@@ -24,7 +24,7 @@ export const SpeedSlider = ({
     onClear,
 }: SpeedSliderProps) => {
     return (
-        <div className={"flex items-center gap-2 " + (className ?? "")}>
+        <div className={cn("flex items-center gap-2", className)}>
             <span className="w-12 text-xs text-neutral-600 dark:text-neutral-400">
                 {label}
             </span>
@@ -39,9 +39,7 @@ export const SpeedSlider = ({
                 aria-label="Playback speed"
             />
             <span
-                className={
-                    "w-12 text-right tabular-nums " + (valueClassName ?? "")
-                }
+                className={cn("w-12 text-right tabular-nums", valueClassName)}
             >
                 {value.toFixed(2)}x
             </span>

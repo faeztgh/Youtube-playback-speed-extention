@@ -1,13 +1,12 @@
 # YouTube Playback Controller
 
-A Chrome and Firefox extension to control YouTube playback speed with a beautiful popup and an in‑page overlay. It stays perfectly in sync with YouTube’s native speed controls and shows the current speed as a toolbar badge.
+A Chrome and Firefox extension to control YouTube playback speed with a beautiful popup. It stays perfectly in sync with YouTube’s native speed controls and shows the current speed as a toolbar badge.
 
 ## Features
 
 - Syncs with YouTube: changing speed in the extension or in YouTube (gear menu) updates both ways instantly
 - Presets and slider: quickly pick common speeds or fine‑tune with a slider
 - Badge: shows current playback speed next to the pinned toolbar icon
-- Overlay: optional in‑page speed controller with auto‑hide, position, and opacity controls
 - Keyboard shortcuts: increase, decrease, reset, and cycle through presets
 - Automation: rules to auto‑apply a speed by channel, title, or URL
 - Profiles: save multiple sets of presets and defaults, and switch quickly
@@ -48,9 +47,13 @@ After each rebuild, click the refresh icon on your extension card in `chrome://e
 - `pnpm run build` – production build to `dist/`
 - `pnpm run dev` – watch mode rebuilds to `dist/`
 - For Firefox dev, you can also run: `npx web-ext run -s dist`
-- `pnpm run lint` – ESLint (TypeScript + React)
-- `pnpm run lint:fix` – ESLint with auto‑fix
+- `pnpm run lint` – Biome check (lint + format verify)
+- `pnpm run lint:fix` – Biome check with auto‑fix
+- `pnpm run format` – Biome formatter (write)
 - `pnpm run typecheck` – TypeScript type checking
+
+Git hooks (via Lefthook, installed on `pnpm install`) run Biome + typecheck on
+commit and validate commit messages with commitlint (Conventional Commits).
 
 
 ## Project structure
@@ -79,7 +82,6 @@ Key files:
 
 - Default playback rate
 - Presets list (add/remove)
-- Overlay: visible, auto‑hide, position (right/bottom in px), opacity
 - Shortcuts: increase, decrease, reset, cycle; step size; optional snap‑to‑preset
 - Automation rules: apply by channel/title/URL; bulk add/import
 - Profiles: save and switch between sets of presets/defaults

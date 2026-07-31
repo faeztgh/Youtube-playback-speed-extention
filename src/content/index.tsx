@@ -1,43 +1,31 @@
-import "../styles/tailwind.css";
+// Do NOT import Tailwind here: Vite inlines it into an injected <style> and its
+// Preflight reset leaks into YouTube, breaking the logo and player controls.
+import { onMessage, sendMessage } from "../shared/messaging";
+import { applyRate } from "../shared/rate";
+import {
+    type ExtensionSettings,
+    getSettings,
+    onSettingsChanged,
+} from "../shared/storage";
 import {
     getPlaybackRate,
+    getVideoIdFromUrl,
     onVideoReady,
     setPlaybackRate,
 } from "../shared/youtube";
-import { onMessage, sendMessage } from "../shared/messaging";
-import {
-    DEFAULT_SETTINGS,
-    getSettings,
-    onSettingsChanged,
-    ExtensionSettings,
-    setSettings,
-} from "../shared/storage";
-import { applyRate } from "../shared/rate";
-
-function getVideoIdFromUrl(u: string): string | null {
-    try {
-        const url = new URL(u, location.href);
-        if (url.hostname === "youtu.be") return url.pathname.slice(1);
-        if (url.searchParams.has("v")) return url.searchParams.get("v");
-        if (url.pathname.startsWith("/shorts/"))
-            return url.pathname.split("/")[2] ?? null;
-        return null;
-    } catch {
-        return null;
-    }
-}
+import { refreshDislikeCounts, setDislikeCountsEnabled } from "./dislikes";
 
 function getYouTubeTitle(): string {
     const og = document.querySelector(
-        'meta[property="og:title"]'
+        'meta[property="og:title"]',
     ) as HTMLMetaElement | null;
     if (og?.content) return og.content;
     const metaTitle = document.querySelector(
-        'meta[name="title"]'
+        'meta[name="title"]',
     ) as HTMLMetaElement | null;
     if (metaTitle?.content) return metaTitle.content;
     const ytFormatted = document.querySelector(
-        "#title h1 yt-formatted-string"
+        "#title h1 yt-formatted-string",
     ) as HTMLElement | null;
     if (ytFormatted) {
         const v = (
@@ -58,7 +46,7 @@ function getYouTubeChannel(): string {
     const anchor = Array.from(document.querySelectorAll("a")).find(
         (a) =>
             a.getAttribute("href")?.startsWith("/@") ||
-            a.getAttribute("href")?.startsWith("/channel/")
+            a.getAttribute("href")?.startsWith("/channel/"),
     );
     return (anchor?.textContent || "").trim();
 }
@@ -107,11 +95,10 @@ function enforceAutomation(settings: ExtensionSettings) {
         }
     }
 
-    // If user has manually chosen a rate for this tab/video, keep it and do not enforce rules.
+    // User override wins over rules; re-assert briefly in case the player resets.
     if (hasUserOverride()) {
         const r = Math.max(0.1, userOverrideRate as number);
         void applyRate(r);
-        // Maintain for a short window in case the player resets itself
         const start = Date.now();
         const keepMs = 15000;
         const interval = setInterval(() => {
@@ -149,7 +136,7 @@ function enforceAutomation(settings: ExtensionSettings) {
 
     let detach = () => {};
     const video = document.querySelector(
-        "video.html5-main-video"
+        "video.html5-main-video",
     ) as HTMLVideoElement | null;
     const v =
         (video && !Number.isNaN(video.playbackRate) ? video : null) ||
@@ -158,7 +145,6 @@ function enforceAutomation(settings: ExtensionSettings) {
         const onRateChange = () => {
             const current = getPlaybackRate();
             if (current !== null) {
-                // Persist per-tab, per-video, and badge update
                 const vid = getVideoIdFromUrl(location.href);
                 if (vid) {
                     void sendMessage({
@@ -192,6 +178,8 @@ function enforceAutomation(settings: ExtensionSettings) {
 
 async function init() {
     let settings = await getSettings();
+    setDislikeCountsEnabled(settings.showDislikeCount);
+    onSettingsChanged((s) => setDislikeCountsEnabled(s.showDislikeCount));
     onVideoReady(async () => {
         const vid = getVideoIdFromUrl(location.href);
         if (vid) {
@@ -228,14 +216,14 @@ async function init() {
                 prev.defaultPlaybackRate !== s.defaultPlaybackRate;
             if (rulesChanged || defaultChanged) {
                 lastRulesKey = newRulesKey;
-                // Only enforce if no user override is active
                 if (!hasUserOverride()) enforceAutomation(s);
             }
         });
 
         const reapply = () => {
-            // New navigation → clear override so rules can apply for the new video
+            // New navigation: clear override so rules re-evaluate for the new video.
             userOverrideRate = null;
+            refreshDislikeCounts();
             setTimeout(() => {
                 onVideoReady(() => enforceAutomation(settings));
             }, 100);
@@ -293,4 +281,3 @@ async function init() {
 }
 
 void init();
-

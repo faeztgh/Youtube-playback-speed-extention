@@ -6,23 +6,37 @@ type ReverseController = {
     speedAbs: number; // positive magnitude, e.g., 1 = 1x reverse
 };
 
+/** Extract the YouTube video ID from a URL (watch `v`, youtu.be, or /shorts/). */
+export function getVideoIdFromUrl(u: string): string | null {
+    try {
+        const url = new URL(u, location.href);
+        if (url.hostname === "youtu.be") return url.pathname.slice(1);
+        if (url.searchParams.has("v")) return url.searchParams.get("v");
+        if (url.pathname.startsWith("/shorts/"))
+            return url.pathname.split("/")[2] ?? null;
+        return null;
+    } catch {
+        return null;
+    }
+}
+
 function getActiveVideoElement(): HTMLVideoElement | null {
     const video = document.querySelector(
-        "video.html5-main-video"
+        "video.html5-main-video",
     ) as HTMLVideoElement | null;
     if (video && !Number.isNaN(video.playbackRate)) return video;
     return document.querySelector("video") as HTMLVideoElement | null;
 }
 
 function getReverseController(
-    video: HTMLVideoElement
+    video: HTMLVideoElement,
 ): ReverseController | null {
     return (video as any).__reverseController ?? null;
 }
 
 function setReverseController(
     video: HTMLVideoElement,
-    controller: ReverseController | null
+    controller: ReverseController | null,
 ) {
     (video as any).__reverseController = controller;
 }

@@ -1,13 +1,13 @@
+import { Pencil, Plus, Save, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ActionButton } from "../../components/ActionButton";
+import { sendMessage } from "../../shared/messaging";
 import {
-    AutomationRule,
-    ExtensionSettings,
+    type AutomationRule,
+    type ExtensionSettings,
     getSettings,
     setSettings,
 } from "../../shared/storage";
-import { sendMessage } from "../../shared/messaging";
-import { Plus, Upload, Pencil, Save, X, Trash2 } from "lucide-react";
-import { ActionButton } from "../../components/ActionButton";
 
 const newRule = (): AutomationRule => ({
     id: crypto.randomUUID(),
@@ -21,7 +21,6 @@ export const AutomationTab = () => {
     const [draft, setDraft] = useState<AutomationRule>(newRule());
     const [drafts, setDrafts] = useState<Record<string, AutomationRule>>({});
 
-    // Multi-add state
     const [multiType, setMultiType] =
         useState<AutomationRule["type"]>("channel");
     const [multiPatterns, setMultiPatterns] = useState("");
@@ -60,14 +59,14 @@ export const AutomationTab = () => {
 
     const edit = (id: string, patch: Partial<AutomationRule>) => {
         const rules = settings.rules.map((r) =>
-            r.id === id ? { ...r, ...patch } : r
+            r.id === id ? { ...r, ...patch } : r,
         );
         void update({ rules });
     };
 
     const addMultiple = () => {
         const patterns = multiPatterns
-            .split(/[\,\n]/)
+            .split(/[,\n]/)
             .map((s) => s.trim())
             .filter(Boolean);
         if (patterns.length === 0) return;
@@ -82,7 +81,6 @@ export const AutomationTab = () => {
     };
 
     const importCSV = () => {
-        // Accept lines like: type,pattern,speed
         const lines = bulkCSV
             .split(/\r?\n/)
             .map((l) => l.trim())
@@ -195,7 +193,7 @@ export const AutomationTab = () => {
                         value={multiType}
                         onChange={(e) =>
                             setMultiType(
-                                e.target.value as AutomationRule["type"]
+                                e.target.value as AutomationRule["type"],
                             )
                         }
                     >

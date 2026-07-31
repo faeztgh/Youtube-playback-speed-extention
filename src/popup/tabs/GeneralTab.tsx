@@ -1,9 +1,10 @@
-import { SpeedSlider } from "../../components/SpeedSlider";
-import { PresetList } from "../../components/PresetList";
-import { Panel } from "../../components/Panel";
-import { Plus, Save, PlusCircle } from "lucide-react";
-import { Input } from "../../components/Input";
+import { Plus, PlusCircle } from "lucide-react";
 import { ActionButton } from "../../components/ActionButton";
+import { Input } from "../../components/Input";
+import { Panel } from "../../components/Panel";
+import { PresetList } from "../../components/PresetList";
+import { SaveButton } from "../../components/SaveButton";
+import { SpeedSlider } from "../../components/SpeedSlider";
 
 export type GeneralTabProps = {
     rates: number[];
@@ -81,10 +82,7 @@ export const GeneralTab = (props: GeneralTabProps) => {
 
             <div className="flex items-center gap-2 mt-4">
                 <div className="ml-auto">
-                    <ActionButton onClick={props.onSave}>
-                        <Save className="w-4 h-4" />
-                        <span className="ml-1">Save</span>
-                    </ActionButton>
+                    <SaveButton onSave={props.onSave} />
                 </div>
             </div>
         </div>

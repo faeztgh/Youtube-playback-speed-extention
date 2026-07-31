@@ -1,6 +1,6 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
 import { fileURLToPath } from "node:url";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
 
 const r = (p: string) => fileURLToPath(new URL(p, import.meta.url));
 
@@ -10,6 +10,9 @@ export default defineConfig({
     build: {
         outDir: "dist",
         emptyOutDir: true,
+        // Chrome extension pages flag Vite's injected <link rel="modulepreload">
+        // as unused ("cross-world extension resource mismatch"). Disable it.
+        modulePreload: false,
         rollupOptions: {
             input: {
                 popup: r("popup.html"),

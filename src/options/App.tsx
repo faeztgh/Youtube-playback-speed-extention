@@ -1,15 +1,15 @@
+import { Heart } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { PresetList } from "../components/PresetList";
+import { SpeedSlider } from "../components/SpeedSlider";
+import { Switch } from "../components/Switch";
+import { AutomationTab } from "../popup/tabs/AutomationTab";
+import { ProfilesTab } from "../popup/tabs/ProfilesTab";
 import {
-    DEFAULT_SETTINGS,
-    ExtensionSettings,
+    type ExtensionSettings,
     getSettings,
     setSettings,
 } from "../shared/storage";
-import { PresetList } from "../components/PresetList";
-import { SpeedSlider } from "../components/SpeedSlider";
-import { ProfilesTab } from "../popup/tabs/ProfilesTab";
-import { AutomationTab } from "../popup/tabs/AutomationTab";
-import { Heart } from "lucide-react";
 
 export const App = () => {
     const [s, setLocal] = useState<ExtensionSettings | null>(null);
@@ -31,7 +31,7 @@ export const App = () => {
 
     const sortedRates = useMemo(
         () => (s ? [...s.customRates].sort((a, b) => a - b) : []),
-        [s?.customRates]
+        [s?.customRates, s],
     );
 
     if (!s) return null;
@@ -50,7 +50,7 @@ export const App = () => {
                     </div>
                     <div className="flex items-center gap-2">
                         <a
-                            href="https://hamibash.com/faez"
+                            href="https://www.faez.pro/support"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white/10 hover:bg-white/20 text-white text-sm border border-white/15 transition active:scale-[.98]"
@@ -106,20 +106,19 @@ export const App = () => {
                                         onChange={(e) =>
                                             update({
                                                 defaultPlaybackRate: Number(
-                                                    e.target.value
+                                                    e.target.value,
                                                 ),
                                             })
                                         }
                                     />
                                 </label>
-                                <label className="flex items-center gap-2">
-                                    <input
-                                        type="checkbox"
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <Switch
+                                        aria-label="Remember last used speed per channel"
                                         checked={s.rememberLastPerChannel}
-                                        onChange={(e) =>
+                                        onChange={(checked) =>
                                             update({
-                                                rememberLastPerChannel:
-                                                    e.target.checked,
+                                                rememberLastPerChannel: checked,
                                             })
                                         }
                                     />
@@ -157,7 +156,7 @@ export const App = () => {
                                             value={customRateInput}
                                             onChange={(e) =>
                                                 setCustomRateInput(
-                                                    e.target.value
+                                                    e.target.value,
                                                 )
                                             }
                                             onKeyDown={(e) =>
@@ -184,7 +183,7 @@ export const App = () => {
                                                 update({
                                                     customRates:
                                                         s.customRates.filter(
-                                                            (x) => x !== r
+                                                            (x) => x !== r,
                                                         ),
                                                 })
                                             }
@@ -223,7 +222,7 @@ export const App = () => {
         if (!Number.isFinite(parsed) || parsed <= 0) return;
         const rounded = Math.round(parsed * 100) / 100;
         const next = Array.from(new Set([...s!.customRates, rounded])).sort(
-            (a, b) => a - b
+            (a, b) => a - b,
         );
         update({ customRates: next });
         setCustomRateInput("");

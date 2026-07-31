@@ -1,3 +1,4 @@
+import { cn } from "../shared/cn";
 import type { ThemeMode } from "../shared/storage";
 
 export type ThemeToggleProps = {
@@ -80,10 +81,10 @@ export const ThemeToggle = ({
     const modes: ThemeMode[] = ["system", "light", "dark"];
     return (
         <div
-            className={
-                (className ?? "") +
-                " flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 p-0.5"
-            }
+            className={cn(
+                className,
+                "flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 p-0.5",
+            )}
             role="group"
             aria-label="Theme"
         >
@@ -95,12 +96,12 @@ export const ThemeToggle = ({
                         type="button"
                         aria-pressed={active}
                         onClick={() => onChange(mode)}
-                        className={
-                            "w-8 h-8 grid place-items-center rounded-md text-white/85 transition " +
-                            (active
+                        className={cn(
+                            "w-8 h-8 grid place-items-center rounded-md text-white/85 transition",
+                            active
                                 ? "bg-white !text-[#0f0f0f] shadow ring-1 ring-white/50"
-                                : "hover:bg-white/10 active:bg-white/20")
-                        }
+                                : "hover:bg-white/10 active:bg-white/20",
+                        )}
                         title={mode[0].toUpperCase() + mode.slice(1)}
                         aria-label={mode}
                     >

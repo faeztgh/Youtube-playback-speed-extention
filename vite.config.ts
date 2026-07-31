@@ -1,6 +1,6 @@
 import type { UserConfigExport } from "vite";
-import content from "./vite.content.config";
 import app from "./vite.app.config";
+import content from "./vite.content.config";
 
 export default ((env): UserConfigExport => {
     const mode = env?.mode || process.env.BUILD_TARGET;
@@ -8,6 +8,6 @@ export default ((env): UserConfigExport => {
         return content;
     if (mode === "app" || process.env.BUILD_TARGET === "app") return app;
     throw new Error(
-        "Specify which config to use: set BUILD_TARGET=content or BUILD_TARGET=app, or run the associated npm scripts."
+        "Specify which config to use: set BUILD_TARGET=content or BUILD_TARGET=app, or run the associated npm scripts.",
     );
 }) as unknown as UserConfigExport;
