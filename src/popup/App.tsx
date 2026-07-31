@@ -174,11 +174,7 @@ export const App = () => {
             </div>
 
             <div className="p-4 pt-3">
-                <Tabs
-                    tabs={tabs as any}
-                    value={activeTab}
-                    onChange={setActiveTab}
-                />
+                <Tabs tabs={tabs} value={activeTab} onChange={setActiveTab} />
 
                 {activeTab === "general" && (
                     <GeneralTab

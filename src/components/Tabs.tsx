@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { cn } from "../shared/cn";
 
 export type TabKey = string;
@@ -5,7 +6,7 @@ export type TabKey = string;
 export type Tab = {
     key: TabKey;
     label: string;
-    icon?: any;
+    icon?: ReactNode;
 };
 
 export type TabsProps = {

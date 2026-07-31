@@ -1,9 +1,7 @@
 @import "tailwindcss";
 
-/* Keep the existing JS config (content globs + class-based dark mode). */
 @config "../../tailwind.config.js";
 
-/* All interactive elements show a pointer cursor. */
 @layer base {
     a[href],
     button,

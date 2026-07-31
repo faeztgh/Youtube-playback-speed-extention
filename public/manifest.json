@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "YouTube Playback Controller",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Control YouTube playback speed with a popup or in-page widget.",
     "icons": {
         "16": "icons/icon-16.png",

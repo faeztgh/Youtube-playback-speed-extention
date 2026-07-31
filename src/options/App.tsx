@@ -65,15 +65,17 @@ export const App = () => {
             <main className="max-w-7xl w-full mx-auto px-6 py-6 grid grid-cols-12 gap-6">
                 <nav className="col-span-12 md:col-span-3">
                     <div className="sticky top-20 space-y-1">
-                        {[
-                            ["general", "General"],
-                            ["presets", "Presets"],
-                            ["profiles", "Profiles"],
-                            ["automation", "Automation"],
-                        ].map(([key, label]) => (
+                        {(
+                            [
+                                ["general", "General"],
+                                ["presets", "Presets"],
+                                ["profiles", "Profiles"],
+                                ["automation", "Automation"],
+                            ] as const
+                        ).map(([key, label]) => (
                             <button
                                 key={key}
-                                onClick={() => setActive(key as any)}
+                                onClick={() => setActive(key)}
                                 className={
                                     "w-full text-left px-3 py-2 rounded-md transition " +
                                     (active === key

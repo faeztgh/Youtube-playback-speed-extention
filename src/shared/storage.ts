@@ -9,10 +9,10 @@ export type PresetProfile = {
 };
 
 export type ShortcutSettings = {
-    increase: string; // keyboard key, e.g. "+"
-    decrease: string; // "-"
-    reset: string; // "0"
-    cycle: string; // "c"
+    increase: string;
+    decrease: string;
+    reset: string;
+    cycle: string;
 };
 
 export type AutomationRule = {
@@ -29,7 +29,6 @@ export type ExtensionSettings = {
     stepSize: number;
     snapToPreset: boolean;
     rememberLastPerChannel: boolean;
-    /** Inject dislike counts into YouTube's native UI (via Return YouTube Dislike). */
     showDislikeCount: boolean;
     profiles: PresetProfile[];
     activeProfileName: string | null;

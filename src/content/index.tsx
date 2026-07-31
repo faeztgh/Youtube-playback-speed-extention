@@ -1,5 +1,3 @@
-// Do NOT import Tailwind here: Vite inlines it into an injected <style> and its
-// Preflight reset leaks into YouTube, breaking the logo and player controls.
 import { onMessage, sendMessage } from "../shared/messaging";
 import { applyRate } from "../shared/rate";
 import {
@@ -95,7 +93,6 @@ function enforceAutomation(settings: ExtensionSettings) {
         }
     }
 
-    // User override wins over rules; re-assert briefly in case the player resets.
     if (hasUserOverride()) {
         const r = Math.max(0.1, userOverrideRate as number);
         void applyRate(r);
@@ -221,7 +218,6 @@ async function init() {
         });
 
         const reapply = () => {
-            // New navigation: clear override so rules re-evaluate for the new video.
             userOverrideRate = null;
             refreshDislikeCounts();
             setTimeout(() => {

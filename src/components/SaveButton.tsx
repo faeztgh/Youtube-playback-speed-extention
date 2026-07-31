@@ -8,7 +8,6 @@ export type SaveButtonProps = {
     savedLabel?: string;
     className?: string;
     disabled?: boolean;
-    /** How long to show the "saved" state, in ms. */
     duration?: number;
 };
 

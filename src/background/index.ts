@@ -11,7 +11,6 @@ function isSupportedUrl(url?: string | null): boolean {
     }
 }
 
-// Firefox lacks storage.session; fall back to storage.local.
 const hasSessionStorage: boolean = !!(chrome.storage as any).session;
 const ephemeralPrefix = "tab:";
 
@@ -54,7 +53,6 @@ async function requestRateFromTab(tabId: number) {
 async function updateActionForTab(tabId: number, url?: string | null) {
     const supported = isSupportedUrl(url);
     try {
-        // Keep the action enabled everywhere so the popup opens on any page.
         await chrome.action.enable(tabId);
         if (supported) {
             await requestRateFromTab(tabId);
@@ -142,7 +140,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 type DislikeCacheEntry = { data: unknown; fetchedAt: number };
 const dislikeCache = new Map<string, DislikeCacheEntry>();
 const DISLIKE_TTL_MS = 5 * 60 * 1000;
-const DISLIKE_CACHE_MAX = 200; // bound memory on long-lived (Firefox) sessions
+const DISLIKE_CACHE_MAX = 200;
 
 async function fetchDislikes(videoId: string): Promise<unknown | null> {
     if (!videoId) return null;
@@ -159,7 +157,6 @@ async function fetchDislikes(videoId: string): Promise<unknown | null> {
         if (!res.ok) return null;
         const json = (await res.json()) as { dislikes?: unknown };
         if (!json || typeof json.dislikes !== "number") return null;
-        // Re-insert last so the over-cap eviction drops the oldest entry.
         dislikeCache.delete(videoId);
         dislikeCache.set(videoId, { data: json, fetchedAt: Date.now() });
         if (dislikeCache.size > DISLIKE_CACHE_MAX) {

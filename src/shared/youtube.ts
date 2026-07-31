@@ -3,10 +3,9 @@ import { snapToYouTubeSpeed } from "./constants";
 type ReverseController = {
     rafId: number | null;
     lastTimestampMs: number | null;
-    speedAbs: number; // positive magnitude, e.g., 1 = 1x reverse
+    speedAbs: number;
 };
 
-/** Extract the YouTube video ID from a URL (watch `v`, youtu.be, or /shorts/). */
 export function getVideoIdFromUrl(u: string): string | null {
     try {
         const url = new URL(u, location.href);

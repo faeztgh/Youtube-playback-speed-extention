@@ -8,7 +8,6 @@ export type Message =
     | { type: "PAUSE_AUTOMATION"; ms?: number }
     | { type: "FETCH_DISLIKES"; videoId: string };
 
-// Only `dislikes` is guaranteed; the rest pass through from the API and may be absent.
 export type DislikeData = {
     dislikes: number;
     likes?: number;
@@ -16,7 +15,6 @@ export type DislikeData = {
     viewCount?: number;
 };
 
-// Namespace polyfill for cross-browser compatibility
 if (
     typeof (globalThis as any).browser === "undefined" &&
     typeof chrome !== "undefined"
