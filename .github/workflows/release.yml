@@ -2,11 +2,13 @@ name: Release
 
 on:
     push:
-        tags:
-            - "v*"
-    release:
-        types: [published]
+        branches: [master]
+        paths:
+            - package.json
     workflow_dispatch:
+
+permissions:
+    contents: write
 
 jobs:
     release:
@@ -16,12 +18,27 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v5
 
+            - name: Derive version from package.json
+              id: meta
+              run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+            - name: Check if tag already exists
+              id: check
+              run: |
+                  if git ls-remote --exit-code --tags origin "refs/tags/v${{ steps.meta.outputs.version }}" >/dev/null 2>&1; then
+                      echo "exists=true" >> $GITHUB_OUTPUT
+                  else
+                      echo "exists=false" >> $GITHUB_OUTPUT
+                  fi
+
             - name: Setup pnpm
+              if: steps.check.outputs.exists == 'false'
               uses: pnpm/action-setup@v4
               with:
                   version: 10
 
             - name: Setup Node.js
+              if: steps.check.outputs.exists == 'false'
               uses: actions/setup-node@v6
               with:
                   node-version: "20"
@@ -29,35 +46,28 @@ jobs:
                   cache-dependency-path: pnpm-lock.yaml
 
             - name: Install dependencies
+              if: steps.check.outputs.exists == 'false'
               run: pnpm install --frozen-lockfile
 
             - name: Build
+              if: steps.check.outputs.exists == 'false'
               run: pnpm run build
 
-            - name: Derive version from package.json
-              id: meta
-              run: echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
-
-            - name: Create zips
+            - name: Zip extension folder
+              if: steps.check.outputs.exists == 'false'
               run: |
                   mkdir -p artifacts
-                  (cd dist && zip -r "../artifacts/yt-playback-controller-v${{ steps.meta.outputs.version }}.zip" .)
                   rm -rf extension
                   mkdir -p extension
                   cp -R dist/* extension/
                   (cd extension && zip -r "../artifacts/extension-folder-v${{ steps.meta.outputs.version }}.zip" .)
 
-            - name: Upload artifact
-              uses: actions/upload-artifact@v5
-              with:
-                  name: yt-playback-controller-v${{ steps.meta.outputs.version }}
-                  path: artifacts/*.zip
-                  if-no-files-found: error
-
             - name: Create GitHub Release
+              if: steps.check.outputs.exists == 'false'
               uses: softprops/action-gh-release@v2
               with:
-                  files: artifacts/*.zip
+                  tag_name: v${{ steps.meta.outputs.version }}
+                  files: artifacts/extension-folder-v${{ steps.meta.outputs.version }}.zip
                   generate_release_notes: true
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
