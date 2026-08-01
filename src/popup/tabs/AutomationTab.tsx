@@ -1,6 +1,7 @@
 import { Pencil, Plus, Save, Trash2, Upload, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ActionButton } from "../../components/ActionButton";
+import { snapToYouTubeSpeed } from "../../shared/constants";
 import { sendMessage } from "../../shared/messaging";
 import {
     type AutomationRule,
@@ -26,6 +27,7 @@ export const AutomationTab = () => {
     const [multiPatterns, setMultiPatterns] = useState("");
     const [multiSpeed, setMultiSpeed] = useState<number>(1);
     const [bulkCSV, setBulkCSV] = useState("");
+    const [importStatus, setImportStatus] = useState<string | null>(null);
 
     useEffect(() => {
         void getSettings().then(setLocal);
@@ -85,22 +87,49 @@ export const AutomationTab = () => {
             .split(/\r?\n/)
             .map((l) => l.trim())
             .filter(Boolean);
-        if (lines.length === 0) return;
-        const out: AutomationRule[] = [];
-        for (const line of lines) {
-            const parts = line.split(/[\t,]/).map((p) => p.trim());
-            if (parts.length < 3) continue;
-            const [typeRaw, pattern, speedRaw] = parts;
-            const type =
-                (typeRaw.toLowerCase() as AutomationRule["type"]) || "title";
-            if (!["title", "channel", "url"].includes(type)) continue;
-            const speed = Number(speedRaw);
-            if (!pattern || !Number.isFinite(speed)) continue;
-            out.push({ id: crypto.randomUUID(), type, pattern, speed });
+        if (lines.length === 0) {
+            setImportStatus("Nothing to import.");
+            return;
         }
-        if (out.length === 0) return;
+        const out: AutomationRule[] = [];
+        let skipped = 0;
+        for (const [i, line] of lines.entries()) {
+            const parts = line.split(/[\t,]/).map((p) => p.trim());
+            const typeRaw = (parts[0] ?? "").toLowerCase();
+            const pattern = parts[1] ?? "";
+            const speedRaw = parts[2] ?? "";
+            if (i === 0 && typeRaw === "type") continue;
+            if (parts.length < 3) {
+                skipped++;
+                continue;
+            }
+            if (!["title", "channel", "url"].includes(typeRaw)) {
+                skipped++;
+                continue;
+            }
+            const type = typeRaw as AutomationRule["type"];
+            const speed = Number(speedRaw);
+            if (!pattern || !Number.isFinite(speed)) {
+                skipped++;
+                continue;
+            }
+            out.push({
+                id: crypto.randomUUID(),
+                type,
+                pattern,
+                speed: snapToYouTubeSpeed(speed),
+            });
+        }
+        if (out.length === 0) {
+            setImportStatus(`No valid rows. ${skipped} skipped.`);
+            return;
+        }
         void update({ rules: [...settings.rules, ...out] });
         setBulkCSV("");
+        setImportStatus(
+            `Imported ${out.length} rule${out.length === 1 ? "" : "s"}` +
+                (skipped ? `, ${skipped} skipped.` : "."),
+        );
     };
 
     const startEdit = (rule: AutomationRule) => {
@@ -231,17 +260,25 @@ export const AutomationTab = () => {
                     Bulk import (CSV or tab: type,pattern,speed)
                 </h4>
                 <textarea
-                    className="w-full min-h[200px] px-3 py-2 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm"
+                    className="w-full min-h-[200px] px-3 py-2 rounded-md border border-gray-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-sm"
                     placeholder={`Examples\nchannel,veritasium,1.5\ntitle,tutorial,1.75\nurl,youtu.be,1.25`}
                     value={bulkCSV}
                     rows={5}
-                    onChange={(e) => setBulkCSV(e.target.value)}
+                    onChange={(e) => {
+                        setBulkCSV(e.target.value);
+                        setImportStatus(null);
+                    }}
                 />
-                <div className="mt-2">
+                <div className="flex items-center gap-2 mt-2">
                     <ActionButton onClick={importCSV}>
                         <Upload className="w-4 h-4" />
                         <span>Import</span>
                     </ActionButton>
+                    {importStatus && (
+                        <span className="text-sm text-neutral-500">
+                            {importStatus}
+                        </span>
+                    )}
                 </div>
             </div>
 
